@@ -6,6 +6,7 @@ import { readBearer, signToken, verifyToken, type TokenClaims } from './lib/jwt'
 import { createPartner, getPartners, handleGetProfiles, handleUpdateProfile, updatePartner } from './routes/profiles';
 import { handleGetWeekPlan, handleGenerateWeekPlan, handleConfirmMeal } from './routes/mealplan';
 import { handleGetRecipes, handleSaveRecipe } from './routes/recipes';
+import { handleMealChat } from './routes/mealChat';
 import { generateMeal, type GeneratedMeal } from './lib/ai';
 import type { Env } from './env';
 
@@ -379,6 +380,12 @@ app.post('/api/household/:id/meal-plan/confirm', async (c) => {
   const denied = await requireAuth(c);
   if (denied) return denied;
   return handleConfirmMeal(c);
+});
+
+app.post('/api/household/:id/meal-chat', async (c) => {
+  const denied = await requireAuth(c);
+  if (denied) return denied;
+  return handleMealChat(c);
 });
 
 app.get('/api/household/:id/recipes', async (c) => {

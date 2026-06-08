@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { Sparkles, Clock, Plus, Check, X, CalendarDays, UtensilsCrossed, Bookmark } from 'lucide-react';
-import { useMealPlan } from '../hooks/useMealPlan';
+import { useState, useRef, useEffect, type FormEvent } from 'react';
+import { Sparkles, Clock, Plus, Check, CalendarDays, Bookmark, Send, ShoppingCart, Package } from 'lucide-react';
+import { useMealChat, type ChatMessage } from '../hooks/useMealChat';
 import { useRecipes } from '../hooks/useRecipes';
 import { useWeekPlan } from '../hooks/useWeekPlan';
 import { useGroceryList } from '../hooks/useGroceryList';
@@ -17,6 +17,12 @@ const DAYS = [
   { key: 'sun', label: 'Sun' },
 ] as const;
 
+const QUICK_ACTIONS = [
+  { label: 'Suggest dinner', message: 'Suggest a meal for tonight based on what we have' },
+  { label: 'What can we make?', message: 'What meals can we make with our pantry items right now?' },
+  { label: 'Something different', message: 'Suggest something we haven\'t tried before' },
+] as const;
+
 export default function MealPlanTab() {
   const [view, setView] = useState<'single' | 'week' | 'saved'>('single');
 
@@ -29,7 +35,7 @@ export default function MealPlanTab() {
           </h1>
           <p className="text-text-secondary text-sm mt-1">
             {view === 'single'
-              ? 'One tap, one dinner suggestion.'
+              ? 'Chat with AI to plan your meal.'
               : view === 'saved'
                 ? 'Meals you love, saved for later.'
                 : 'Plan the week. Shop once.'}
@@ -66,259 +72,313 @@ export default function MealPlanTab() {
         </div>
       </div>
 
-      {view === 'single' ? <SingleMealView /> : view === 'saved' ? <SavedRecipesView /> : <WeekView />}
+      {view === 'single' ? <MealChatView /> : view === 'saved' ? <SavedRecipesView /> : <WeekView />}
     </div>
   );
 }
 
-function SingleMealView() {
-  const { meal, isGenerating, error, generateMeal, clearMeal } = useMealPlan();
-  const { addItem } = useGroceryList();
-  const [addedItems, setAddedItems] = useState<Set<string>>(new Set());
+function MealChatView() {
+  const { messages, isTyping, error, sendMessage, clearChat } = useMealChat();
+  const [input, setInput] = useState('');
+  const listRef = useRef<HTMLDivElement>(null);
 
-  function handleAddMissing(meal: GeneratedMeal) {
-    const missing = meal.ingredients.filter((i) => !i.have && !addedItems.has(i.name));
-    for (const item of missing) {
-      addItem({ name: item.name, category: classify(item.name) });
+  useEffect(() => {
+    if (listRef.current) {
+      listRef.current.scrollTop = listRef.current.scrollHeight;
     }
-    setAddedItems((prev) => {
-      const next = new Set(prev);
-      for (const ing of missing) next.add(ing.name);
-      return next;
-    });
+  }, [messages, isTyping]);
+
+  function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    if (!input.trim() || isTyping) return;
+    sendMessage(input);
+    setInput('');
   }
 
-  if (!meal && !isGenerating) {
-    return (
-      <div className="text-center py-16">
-        <div className="w-16 h-16 bg-sage/10 rounded-full flex items-center justify-center mx-auto mb-6">
-          <Sparkles size={28} className="text-sage" />
-        </div>
-        <p className="text-text-primary text-xl font-semibold mb-2">
-          Ready to decide dinner?
-        </p>
-        <p className="text-text-secondary text-base leading-relaxed max-w-sm mx-auto mb-8">
-          We'll look at your pantry and both your preferences, then suggest one meal.
-        </p>
-        <button
-          type="button"
-          onClick={generateMeal}
-          className="bg-sage text-white font-medium py-4 px-8 rounded-2xl hover:bg-sage-dark active:scale-[0.99] transition-all inline-flex items-center gap-2"
-        >
-          <Sparkles size={18} />
-          Generate a meal
-        </button>
-      </div>
-    );
+  function handleQuickAction(message: string) {
+    sendMessage(message);
   }
-
-  if (isGenerating) {
-    return (
-      <div className="text-center py-16">
-        <div className="w-16 h-16 bg-sage/10 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
-          <Sparkles size={28} className="text-sage" />
-        </div>
-        <p className="text-text-primary text-lg font-medium">Thinking of something delicious…</p>
-        <p className="text-text-secondary text-sm mt-2">This takes a moment.</p>
-      </div>
-    );
-  }
-
-  if (error && !meal) {
-    return (
-      <div className="text-center py-16">
-        <p className="text-error text-base">{error}</p>
-        <button
-          type="button"
-          onClick={generateMeal}
-          className="mt-4 text-sage font-medium hover:text-sage-dark"
-        >
-          Try again
-        </button>
-      </div>
-    );
-  }
-
-  if (!meal) return null;
 
   return (
-    <MealCard meal={meal} onAddMissing={() => handleAddMissing(meal)} onRegenerate={generateMeal} onClear={clearMeal} />
+    <div className="flex flex-col" style={{ minHeight: 'calc(100vh - 220px)' }}>
+      <div ref={listRef} className="flex-1 overflow-y-auto space-y-4 pb-4">
+        {messages.length === 0 && !isTyping && (
+          <div className="text-center py-8">
+            <div className="w-16 h-16 bg-sage/10 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Sparkles size={28} className="text-sage" />
+            </div>
+            <p className="text-text-primary text-xl font-semibold mb-2">
+              Ready to decide dinner?
+            </p>
+            <p className="text-text-secondary text-base leading-relaxed max-w-sm mx-auto mb-6">
+              Tell me what you're in the mood for, or let me check your pantry and suggest something.
+            </p>
+            <div className="flex flex-wrap justify-center gap-2">
+              {QUICK_ACTIONS.map((action) => (
+                <button
+                  key={action.label}
+                  type="button"
+                  onClick={() => handleQuickAction(action.message)}
+                  className="bg-cream text-text-secondary text-sm font-medium px-4 py-2 rounded-xl border border-border hover:bg-cream-dark hover:text-text-primary transition-colors"
+                >
+                  {action.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {messages.map((msg) => (
+          <ChatBubble key={msg.id} message={msg} />
+        ))}
+
+        {isTyping && (
+          <div className="flex justify-start">
+            <div className="bg-cream border border-border rounded-2xl rounded-bl-md px-4 py-3 max-w-[85%]">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-sage/60 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                <div className="w-2 h-2 bg-sage/60 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                <div className="w-2 h-2 bg-sage/60 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {error && (
+          <div className="text-center">
+            <p className="text-error text-sm">{error}</p>
+            <button
+              type="button"
+              onClick={clearChat}
+              className="mt-2 text-sage text-sm font-medium hover:text-sage-dark"
+            >
+              Start over
+            </button>
+          </div>
+        )}
+      </div>
+
+      <div className="border-t border-border pt-3 mt-2">
+        {messages.length > 2 && (
+          <div className="flex flex-wrap gap-2 mb-3">
+            {QUICK_ACTIONS.map((action) => (
+              <button
+                key={action.label}
+                type="button"
+                onClick={() => handleQuickAction(action.message)}
+                className="bg-cream text-text-secondary text-xs font-medium px-3 py-1.5 rounded-lg border border-border hover:bg-cream-dark hover:text-text-primary transition-colors"
+              >
+                {action.label}
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={clearChat}
+              className="bg-cream text-text-secondary text-xs font-medium px-3 py-1.5 rounded-lg border border-border hover:bg-cream-dark hover:text-error transition-colors"
+            >
+              Clear
+            </button>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="flex gap-2">
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="e.g. something with chicken, quick pasta, vegetarian..."
+            disabled={isTyping}
+            className="flex-1 bg-white border border-border rounded-xl px-4 py-3 text-sm text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage/50 disabled:opacity-50 transition-colors"
+          />
+          <button
+            type="submit"
+            disabled={!input.trim() || isTyping}
+            className="bg-sage text-white px-4 py-3 rounded-xl hover:bg-sage-dark active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center"
+          >
+            <Send size={18} />
+          </button>
+        </form>
+      </div>
+    </div>
   );
 }
 
-function MealCard({
-  meal,
-  onAddMissing,
-  onRegenerate,
-  onClear,
-}: {
-  meal: GeneratedMeal;
-  onAddMissing: () => void;
-  onRegenerate: () => void;
-  onClear: () => void;
-}) {
-  const [showPlating, setShowPlating] = useState(false);
-  const { saveRecipe, isSaving, hasSaved } = useMealSave(meal);
-  const missingCount = meal.ingredients.filter((i) => !i.have).length;
-  const haveCount = meal.ingredients.filter((i) => i.have).length;
+function ChatBubble({ message }: { message: ChatMessage }) {
+  const isUser = message.role === 'user';
 
   return (
-    <div className="space-y-6">
-      <section className="bg-white border border-border rounded-2xl overflow-hidden">
-        <div className="px-6 py-5 border-b border-border">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1">
-              <h2 className="text-text-primary text-2xl font-semibold tracking-tight">
-                {meal.name}
-              </h2>
-              <p className="text-text-secondary text-sm mt-1 leading-relaxed">
-                {meal.description}
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={onClear}
-              className="flex-shrink-0 p-1.5 rounded-full text-text-secondary hover:text-text-primary transition-colors"
-              aria-label="Dismiss"
-            >
-              <X size={18} />
-            </button>
-          </div>
+    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
+      <div
+        className={`max-w-[85%] rounded-2xl ${
+          isUser
+            ? 'bg-sage text-white rounded-br-md px-4 py-3'
+            : 'bg-white border border-border rounded-bl-md px-4 py-3'
+        }`}
+      >
+        <p className={`text-sm leading-relaxed whitespace-pre-wrap ${isUser ? 'text-white' : 'text-text-primary'}`}>
+          {message.content}
+        </p>
 
-          <div className="flex items-center gap-4 mt-4">
-            <div className="flex items-center gap-1.5 text-text-secondary text-sm">
-              <Clock size={14} />
-              <span>{meal.timeMinutes} min</span>
-            </div>
-            <div className="flex items-center gap-1.5 text-sage text-sm font-medium">
-              <Check size={14} />
-              <span>{haveCount} in pantry</span>
-            </div>
-            {missingCount > 0 && (
-              <div className="flex items-center gap-1.5 text-terracotta text-sm font-medium">
-                <Plus size={14} />
-                <span>{missingCount} to buy</span>
-              </div>
+        {!isUser && message.meal && (
+          <div className="mt-3">
+            <InlineMealCard meal={message.meal} />
+          </div>
+        )}
+
+        {!isUser && (message.addedToList || message.addedToPantry) && (
+          <div className="mt-2 flex flex-wrap gap-2">
+            {message.addedToPantry && message.addedToPantry.length > 0 && (
+              <span className="inline-flex items-center gap-1.5 bg-sage/10 text-sage text-xs font-medium px-2.5 py-1 rounded-lg">
+                <Package size={12} />
+                {message.addedToPantry.length} item{message.addedToPantry.length > 1 ? 's' : ''} added to pantry
+              </span>
             )}
-          </div>
-        </div>
-
-        <div className="px-6 py-4 grid grid-cols-4 gap-3 border-b border-border bg-cream/50">
-          <div className="text-center">
-            <p className="text-text-secondary text-xs uppercase tracking-wide">Calories</p>
-            <p className="text-text-primary text-lg font-semibold">{meal.calories}</p>
-          </div>
-          <div className="text-center">
-            <p className="text-text-secondary text-xs uppercase tracking-wide">Protein</p>
-            <p className="text-text-primary text-lg font-semibold">{meal.protein}g</p>
-          </div>
-          <div className="text-center">
-            <p className="text-text-secondary text-xs uppercase tracking-wide">Carbs</p>
-            <p className="text-text-primary text-lg font-semibold">{meal.carbs}g</p>
-          </div>
-          <div className="text-center">
-            <p className="text-text-secondary text-xs uppercase tracking-wide">Fat</p>
-            <p className="text-text-primary text-lg font-semibold">{meal.fat}g</p>
-          </div>
-        </div>
-
-        <div className="px-6 py-4">
-          <h3 className="text-text-secondary text-xs font-medium tracking-[0.2em] uppercase mb-3">
-            Ingredients
-          </h3>
-          <ul className="space-y-2">
-            {meal.ingredients.map((ing, i) => (
-              <li key={i} className="flex items-center gap-3">
-                <span
-                  className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                    ing.have ? 'bg-sage' : 'bg-terracotta'
-                  }`}
-                  aria-hidden
-                />
-                <span
-                  className={`text-base ${
-                    ing.have ? 'text-text-primary' : 'text-text-secondary'
-                  }`}
-                >
-                  {ing.quantity && <span className="text-text-secondary">{ing.quantity} </span>}
-                  {ing.name}
-                </span>
-                {!ing.have && (
-                  <span className="text-xs text-terracotta font-medium ml-auto">need</span>
-                )}
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="px-6 py-4">
-          <h3 className="text-text-secondary text-xs font-medium tracking-[0.2em] uppercase mb-3">
-            Steps
-          </h3>
-          <ol className="space-y-3">
-            {meal.steps.map((step, i) => (
-              <li key={i} className="flex gap-3">
-                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-sage/10 text-sage text-xs font-semibold flex items-center justify-center">
-                  {i + 1}
-                </span>
-                <p className="text-text-primary text-sm leading-relaxed pt-0.5">{step}</p>
-              </li>
-            ))}
-          </ol>
-        </div>
-
-        {meal.plating && meal.plating.length > 0 && (
-          <div className="px-6 py-4 border-t border-border">
-            <button
-              type="button"
-              onClick={() => setShowPlating(!showPlating)}
-              className="flex items-center gap-2 text-sage font-medium hover:text-sage-dark transition-colors"
-            >
-              <UtensilsCrossed size={16} />
-              {showPlating ? 'Hide' : 'Show'} plating instructions
-            </button>
-
-            {showPlating && (
-              <div className="mt-4 grid md:grid-cols-2 gap-4">
-                {meal.plating.map((p) => (
-                  <PlatingCard key={p.partnerSlot} plating={p} />
-                ))}
-              </div>
+            {message.addedToList && message.addedToList.length > 0 && (
+              <span className="inline-flex items-center gap-1.5 bg-terracotta/10 text-terracotta text-xs font-medium px-2.5 py-1 rounded-lg">
+                <ShoppingCart size={12} />
+                {message.addedToList.length} item{message.addedToList.length > 1 ? 's' : ''} added to list
+              </span>
             )}
           </div>
         )}
-      </section>
+      </div>
+    </div>
+  );
+}
 
-      <div className="flex gap-3">
+function InlineMealCard({ meal }: { meal: GeneratedMeal }) {
+  const [expanded, setExpanded] = useState(false);
+  const { saveRecipe, isSaving, hasSaved } = useMealSave(meal);
+  const missingCount = meal.ingredients.filter((i) => !i.have).length;
+  const haveCount = meal.ingredients.filter((i) => i.have).length;
+  const { addItem } = useGroceryList();
+  const [addedMissing, setAddedMissing] = useState(false);
+
+  function handleAddMissing() {
+    const missing = meal.ingredients.filter((i) => !i.have);
+    for (const item of missing) {
+      addItem({ name: item.name, category: classify(item.name) });
+    }
+    setAddedMissing(true);
+  }
+
+  return (
+    <div className="bg-cream/60 rounded-xl overflow-hidden border border-border/50">
+      <div className="px-4 py-3">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h3 className="text-text-primary text-base font-semibold">{meal.name}</h3>
+            <p className="text-text-secondary text-xs mt-0.5">{meal.description}</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 mt-2 text-xs">
+          <span className="flex items-center gap-1 text-text-secondary">
+            <Clock size={12} />
+            {meal.timeMinutes}m
+          </span>
+          <span className="flex items-center gap-1 text-sage font-medium">
+            <Check size={12} />
+            {haveCount} in pantry
+          </span>
+          {missingCount > 0 && (
+            <span className="flex items-center gap-1 text-terracotta font-medium">
+              <Plus size={12} />
+              {missingCount} to buy
+            </span>
+          )}
+        </div>
+
+        <div className="grid grid-cols-4 gap-2 mt-3">
+          {[
+            { label: 'Cal', value: meal.calories },
+            { label: 'P', value: `${meal.protein}g` },
+            { label: 'C', value: `${meal.carbs}g` },
+            { label: 'F', value: `${meal.fat}g` },
+          ].map((stat) => (
+            <div key={stat.label} className="text-center bg-white/60 rounded-lg py-1.5">
+              <p className="text-text-secondary text-[10px] uppercase">{stat.label}</p>
+              <p className="text-text-primary text-sm font-semibold">{stat.value}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <button
+        type="button"
+        onClick={() => setExpanded(!expanded)}
+        className="w-full text-center text-xs text-sage font-medium py-2 border-t border-border/50 hover:bg-cream/80 transition-colors"
+      >
+        {expanded ? 'Hide' : 'Show'} ingredients & steps
+      </button>
+
+      {expanded && (
+        <div className="px-4 py-3 border-t border-border/50 space-y-3">
+          <div>
+            <p className="text-text-secondary text-[10px] uppercase tracking-[0.15em] font-medium mb-2">Ingredients</p>
+            <ul className="space-y-1.5">
+              {meal.ingredients.map((ing, i) => (
+                <li key={i} className="flex items-center gap-2 text-xs">
+                  <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${ing.have ? 'bg-sage' : 'bg-terracotta'}`} />
+                  <span className={ing.have ? 'text-text-primary' : 'text-text-secondary'}>
+                    {ing.quantity && <span className="text-text-secondary">{ing.quantity} </span>}
+                    {ing.name}
+                  </span>
+                  {!ing.have && <span className="text-terracotta font-medium ml-auto">need</span>}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <p className="text-text-secondary text-[10px] uppercase tracking-[0.15em] font-medium mb-2">Steps</p>
+            <ol className="space-y-2">
+              {meal.steps.map((step, i) => (
+                <li key={i} className="flex gap-2">
+                  <span className="flex-shrink-0 w-5 h-5 rounded-full bg-sage/10 text-sage text-[10px] font-semibold flex items-center justify-center">
+                    {i + 1}
+                  </span>
+                  <p className="text-text-primary text-xs leading-relaxed pt-0.5">{step}</p>
+                </li>
+              ))}
+            </ol>
+          </div>
+
+          {meal.plating && meal.plating.length > 0 && (
+            <div>
+              <p className="text-text-secondary text-[10px] uppercase tracking-[0.15em] font-medium mb-2">Plating</p>
+              <div className="grid grid-cols-2 gap-2">
+                {meal.plating.map((p) => (
+                  <PlatingCard key={p.partnerSlot} plating={p} compact />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="px-4 py-2.5 border-t border-border/50 flex gap-2">
         <button
           type="button"
-          onClick={onAddMissing}
-          disabled={missingCount === 0}
-          className="flex-1 bg-sage text-white font-medium py-3 px-6 rounded-xl hover:bg-sage-dark active:scale-[0.99] transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          onClick={handleAddMissing}
+          disabled={missingCount === 0 || addedMissing}
+          className="flex-1 bg-sage text-white text-xs font-medium py-2 px-3 rounded-lg hover:bg-sage-dark active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
         >
-          <Plus size={16} />
-          Add {missingCount} missing to list
+          <Plus size={12} />
+          {addedMissing ? 'Added' : `Add ${missingCount} to list`}
         </button>
         <button
           type="button"
           onClick={saveRecipe}
           disabled={isSaving || hasSaved}
-          className={`flex-shrink-0 font-medium py-3 px-4 rounded-xl transition-all flex items-center gap-2 ${
+          className={`text-xs font-medium py-2 px-3 rounded-lg transition-all flex items-center gap-1.5 ${
             hasSaved
               ? 'bg-sage/10 text-sage border border-sage/30'
-              : 'bg-cream text-text-secondary border border-border hover:bg-cream-dark'
+              : 'bg-white text-text-secondary border border-border hover:bg-cream'
           } disabled:opacity-40`}
         >
-          <Bookmark size={16} fill={hasSaved ? 'currentColor' : 'none'} />
+          <Bookmark size={12} fill={hasSaved ? 'currentColor' : 'none'} />
           {hasSaved ? 'Saved' : 'Save'}
-        </button>
-        <button
-          type="button"
-          onClick={onRegenerate}
-          className="flex-shrink-0 bg-cream text-text-secondary font-medium py-3 px-4 rounded-xl border border-border hover:bg-cream-dark transition-colors flex items-center gap-2"
-        >
-          <Sparkles size={16} />
-          Another
         </button>
       </div>
     </div>
@@ -342,21 +402,23 @@ function useMealSave(meal: GeneratedMeal) {
 
 function PlatingCard({
   plating,
+  compact = false,
 }: {
   plating: { partnerSlot: number; partnerName: string; targetCalories: number; plate: string; protein: number; carbs: number; fat: number };
+  compact?: boolean;
 }) {
   const dotColor = plating.partnerSlot === 1 ? 'bg-sage' : 'bg-terracotta';
   const borderColor = plating.partnerSlot === 1 ? 'border-sage/30' : 'border-terracotta/30';
 
   return (
-    <div className={`bg-cream/50 border ${borderColor} rounded-xl p-4`}>
-      <div className="flex items-center gap-2 mb-3">
-        <span className={`w-3 h-3 rounded-full ${dotColor}`} aria-hidden />
-        <h4 className="text-text-primary text-sm font-semibold">{plating.partnerName}'s plate</h4>
-        <span className="ml-auto text-text-secondary text-xs">{plating.targetCalories} cal</span>
+    <div className={`border ${borderColor} rounded-xl p-3 ${compact ? 'bg-white/60' : 'bg-cream/50'}`}>
+      <div className="flex items-center gap-1.5 mb-1.5">
+        <span className={`w-2.5 h-2.5 rounded-full ${dotColor}`} aria-hidden />
+        <h4 className={`font-semibold ${compact ? 'text-xs' : 'text-sm'} text-text-primary`}>{plating.partnerName}'s plate</h4>
+        <span className="ml-auto text-text-secondary text-[10px]">{plating.targetCalories} cal</span>
       </div>
-      <p className="text-text-primary text-sm leading-relaxed mb-2">{plating.plate}</p>
-      <div className="flex gap-4 text-xs text-text-secondary">
+      <p className={`text-text-primary leading-relaxed mb-1 ${compact ? 'text-[11px]' : 'text-sm'}`}>{plating.plate}</p>
+      <div className="flex gap-3 text-[10px] text-text-secondary">
         <span>P: {plating.protein}g</span>
         <span>C: {plating.carbs}g</span>
         <span>F: {plating.fat}g</span>

@@ -224,18 +224,23 @@ JSON format:
 
 async function callProvider(
   env: Env,
-  provider: 'alibaba' | 'zai',
+  provider: 'alibaba' | 'zai' | 'deepseek',
   model: string,
   prompt: string,
 ): Promise<GeneratedMeal | null> {
   const config = PROVIDER_CONFIG[provider];
-  const secretRef = config.secretRef;
+  const apiKey = (env as unknown as Record<string, unknown>)[config.secretRef] as string;
+
+  if (!apiKey) {
+    console.error(`Missing API key for provider ${provider}: ${config.secretRef}`);
+    return null;
+  }
 
   const res = await fetch(config.baseUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      [config.authHeader]: `${config.authPrefix} ${secretRef}`,
+      [config.authHeader]: `${config.authPrefix} ${apiKey}`,
     },
     body: JSON.stringify({
       model,
@@ -365,4 +370,173 @@ function generateMock(
   }
 
   return meal;
+}
+
+export interface ChatResponse {
+  message: string;
+  meal?: GeneratedMeal;
+  actions?: {
+    addToPantry?: string[];
+    addToList?: string[];
+  };
+}
+
+interface PartnerContext {
+  name: string;
+  diet: Diet;
+  allergies: string;
+  tdee: TDEEResult | null;
+  slot: 1 | 2;
+}
+
+function buildChatSystemPrompt(
+  pantryItems: Array<{ name: string; quantity: string; category?: string; quantityValue?: number | null; quantityUnit?: string }>,
+  profiles: PartnerContext[],
+): string {
+  const pantryList = pantryItems.map((i) => {
+    const qty = i.quantityValue && i.quantityUnit ? `${i.quantityValue} ${i.quantityUnit}` : (i.quantity || '');
+    const cat = i.category ? `, ${i.category}` : '';
+    return `${i.name}${qty ? ` (${qty}${cat})` : (cat ? ` (${cat})` : '')}`;
+  }).join(', ') || 'empty';
+
+  const p1 = profiles.find((p) => p.slot === 1);
+  const p2 = profiles.find((p) => p.slot === 2);
+
+  const p1Line = p1
+    ? `Partner 1: ${p1.name}, diet=${p1.diet}${p1.allergies ? `, allergies=${p1.allergies}` : ''}${p1.tdee ? `, target=${p1.tdee.targetCalories} cal/day` : ''}`
+    : 'Partner 1: no profile set';
+  const p2Line = p2
+    ? `Partner 2: ${p2.name}, diet=${p2.diet}${p2.allergies ? `, allergies=${p2.allergies}` : ''}${p2.tdee ? `, target=${p2.tdee.targetCalories} cal/day` : ''}`
+    : 'Partner 2: no profile set';
+
+  const hasBothTdee = p1?.tdee && p2?.tdee;
+
+  return `You are Cupla's meal planner for couples. Your job is to help them decide what to cook together based on what they have and what they need.
+
+Pantry: ${pantryList}
+${p1Line}
+${p2Line}
+
+Rules:
+- Be concise and direct. No greetings, no filler, no small talk. Get to the point.
+- Prioritize using pantry ingredients. When listing ingredients, mark have=true if in pantry, have=false if missing.
+- If the user's request is vague and you need to decide between multiple good options, ask ONE brief question (cuisine preference? time limit? spice level?).
+- When you suggest a meal, include the full meal object in your response.
+- If ingredients are missing, put them in addToList so the user can buy them.
+- If the user says they bought something or have it, put it in addToPantry.
+- Every meal must work for BOTH partners' dietary requirements. If one is vegetarian, the meal is vegetarian.
+- Keep total cook time under 30 minutes unless the user asks for something specific.
+${hasBothTdee ? `- When both partners have calorie targets, include plating instructions with different portion sizes for each partner.\n- Use the same recipe but adjust quantities so each person hits their target calories.` : ''}
+
+Response format — you MUST respond with valid JSON only, no markdown:
+{
+  "message": "Your response to the user (2-3 sentences max, be direct)",
+  "meal": {
+    "name": "Recipe Name",
+    "description": "Brief appetizing description",
+    "timeMinutes": 25,
+    "calories": 500,
+    "protein": 35,
+    "carbs": 45,
+    "fat": 15,
+    "ingredients": [
+      {"name": "ingredient name", "have": true, "quantity": "1 cup"},
+      {"name": "missing ingredient", "have": false, "quantity": "2 tbsp"}
+    ],
+    "steps": ["Step 1", "Step 2", "Step 3"]${hasBothTdee ? `,
+    "plating": [
+      {"partnerSlot": 1, "partnerName": "${p1?.name ?? 'Partner 1'}", "targetCalories": ${p1?.tdee?.targetCalories ?? 0}, "plate": "4oz protein over greens, 1/2 cup rice", "protein": 35, "carbs": 30, "fat": 12},
+      {"partnerSlot": 2, "partnerName": "${p2?.name ?? 'Partner 2'}", "targetCalories": ${p2?.tdee?.targetCalories ?? 0}, "plate": "6oz protein, 1 cup rice, side vegetables", "protein": 50, "carbs": 55, "fat": 15}
+    ]` : ''}
+  },
+  "actions": {
+    "addToPantry": ["item they just bought"],
+    "addToList": ["item they need to buy"]
+  }
+}
+
+Only include "meal" when you are suggesting a specific recipe. Only include "actions" when there are items to add. If you are just asking a question or clarifying, only include "message".`;
+}
+
+async function callDeepSeekChat(
+  env: Env,
+  systemPrompt: string,
+  history: Array<{ role: 'user' | 'assistant'; content: string }>,
+  userMessage: string,
+): Promise<string | null> {
+  const provider = (env.AI_PROVIDER || 'deepseek') as keyof typeof MODEL_CHAINS;
+  const models = MODEL_CHAINS[provider] || MODEL_CHAINS.deepseek;
+
+  const messages: Array<{ role: string; content: string }> = [
+    { role: 'system', content: systemPrompt },
+    ...history.map((m) => ({ role: m.role, content: m.content })),
+    { role: 'user', content: userMessage },
+  ];
+
+  for (const model of models) {
+    try {
+      const config = PROVIDER_CONFIG[provider as 'alibaba' | 'zai' | 'deepseek'];
+      const apiKey = (env as unknown as Record<string, unknown>)[config.secretRef] as string;
+
+      if (!apiKey) {
+        console.error(`Missing API key for ${provider}: ${config.secretRef}`);
+        continue;
+      }
+
+      const res = await fetch(config.baseUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          [config.authHeader]: `${config.authPrefix} ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model,
+          max_tokens: 2048,
+          messages,
+        }),
+      });
+
+      if (!res.ok) {
+        console.error(`Chat call failed for model ${model}: ${res.status}`);
+        continue;
+      }
+
+      const data = (await res.json()) as { choices: Array<{ message: { content: string } }> };
+      const text = data.choices?.[0]?.message?.content ?? '';
+      if (text) return text;
+    } catch (err) {
+      console.error(`Chat model ${model} failed:`, err);
+    }
+  }
+
+  return null;
+}
+
+export async function chatWithAI(
+  env: Env,
+  pantryItems: Array<{ name: string; quantity: string; category?: string; quantityValue?: number | null; quantityUnit?: string }>,
+  profiles: PartnerContext[],
+  history: Array<{ role: 'user' | 'assistant'; content: string }>,
+  userMessage: string,
+): Promise<ChatResponse> {
+  const systemPrompt = buildChatSystemPrompt(pantryItems, profiles);
+  const raw = await callDeepSeekChat(env, systemPrompt, history, userMessage);
+
+  if (!raw) {
+    return { message: 'I couldn\'t generate a response right now. Try again in a moment.' };
+  }
+
+  try {
+    const jsonMatch = raw.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]) as ChatResponse;
+      if (parsed.message && typeof parsed.message === 'string') {
+        return parsed;
+      }
+    }
+  } catch {
+    console.error('Failed to parse chat AI response');
+  }
+
+  return { message: raw };
 }
