@@ -7,6 +7,9 @@ import { useGroceryList } from '../hooks/useGroceryList';
 import { classify } from '../lib/categories';
 import type { GeneratedMeal } from '../types/meal';
 
+// Version: 2026-06-08-fix-no-mock
+console.log('[MealPlanTab] v2026-06-08-fix-no-mock loaded');
+
 const DAYS = [
   { key: 'mon', label: 'Mon' },
   { key: 'tue', label: 'Tue' },

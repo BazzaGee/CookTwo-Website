@@ -361,6 +361,9 @@ app.post('/api/household/:id/meal-plan/generate', async (c) => {
   const p2Body = p2?.tdee ? { name: p2.name, tdee: p2.tdee } : undefined;
 
   const meal = await generateMeal(c.env, pantryItems, p1Diet, p2Diet, p1Body, p2Body);
+  if (!meal) {
+    return c.json({ error: 'AI meal generation failed. Please try again later.' }, 503);
+  }
   return c.json(meal);
 });
 

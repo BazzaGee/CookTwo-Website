@@ -90,11 +90,15 @@ export async function handleGenerateWeekPlan(c: Context<{ Bindings: Env }>) {
 
   for (const day of DAYS) {
     const meal = await generateMeal(c.env, pantryItems, p1Diet, p2Diet);
-    meals.push({
-      dayOfWeek: day,
-      mealName: meal.name,
-      mealData: JSON.stringify(meal),
-    });
+    if (meal) {
+      meals.push({
+        dayOfWeek: day,
+        mealName: meal.name,
+        mealData: JSON.stringify(meal),
+      });
+    } else {
+      console.error(`AI failed to generate meal for ${day}. Skipping.`);
+    }
   }
 
   const saved = await saveWeekPlan(c.env.DB, householdId, meals);
