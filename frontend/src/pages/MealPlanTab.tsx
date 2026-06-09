@@ -78,10 +78,11 @@ function MealChatView() {
   const { messages, isTyping, error, sendMessage, clearChat } = useMealChat();
   const [input, setInput] = useState('');
   const listRef = useRef<HTMLDivElement>(null);
+  const lastMsgRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (listRef.current) {
-      listRef.current.scrollTop = listRef.current.scrollHeight;
+    if (lastMsgRef.current) {
+      lastMsgRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
     }
   }, [messages, isTyping]);
 
@@ -92,25 +93,40 @@ function MealChatView() {
     setInput('');
   }
 
+  function handleGenerateMeal() {
+    sendMessage("Suggest a meal for tonight based on what we have in the pantry");
+    setInput('');
+  }
+
   return (
     <div className="flex flex-col" style={{ minHeight: 'calc(100vh - 220px)' }}>
       <div ref={listRef} className="flex-1 overflow-y-auto space-y-4 pb-4">
         {messages.length === 0 && !isTyping && (
-          <div className="text-center py-8">
-            <div className="w-16 h-16 bg-sage/10 rounded-full flex items-center justify-center mx-auto mb-6">
+          <div className="text-center pt-12 pb-4">
+            <div className="w-16 h-16 bg-sage/10 rounded-full flex items-center justify-center mx-auto mb-5">
               <Sparkles size={28} className="text-sage" />
             </div>
-            <p className="text-text-primary text-xl font-semibold mb-2">
+            <p className="text-text-primary text-xl font-semibold mb-1">
               What should we cook?
             </p>
-            <p className="text-text-secondary text-base leading-relaxed max-w-sm mx-auto">
-              Tell me what you're in the mood for, or ask me to check your pantry.
+            <p className="text-text-secondary text-sm leading-relaxed mb-6 max-w-[260px] mx-auto">
+              One tap to check your pantry and suggest a meal.
             </p>
+            <button
+              type="button"
+              onClick={handleGenerateMeal}
+              className="bg-sage text-white font-medium py-3.5 px-8 rounded-2xl hover:bg-sage-dark active:scale-[0.98] transition-all inline-flex items-center gap-2 text-base"
+            >
+              <Sparkles size={20} />
+              Generate a meal
+            </button>
           </div>
         )}
 
-        {messages.map((msg) => (
-          <ChatBubble key={msg.id} message={msg} />
+        {messages.map((msg, i) => (
+          <div key={msg.id} ref={i === messages.length - 1 ? lastMsgRef : undefined}>
+            <ChatBubble message={msg} />
+          </div>
         ))}
 
         {isTyping && (
@@ -145,7 +161,7 @@ function MealChatView() {
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask me anything about your meal..."
+            placeholder="Questions? Substitutions? Ask here..."
             disabled={isTyping}
             className="flex-1 bg-white border border-border rounded-xl px-4 py-3 text-sm text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage/50 disabled:opacity-50 transition-colors"
           />
@@ -158,13 +174,23 @@ function MealChatView() {
           </button>
         </form>
         {messages.length > 0 && (
-          <button
-            type="button"
-            onClick={clearChat}
-            className="mt-2 text-text-secondary text-xs hover:text-error transition-colors"
-          >
-            Clear conversation
-          </button>
+          <div className="flex items-center justify-between mt-2">
+            <button
+              type="button"
+              onClick={handleGenerateMeal}
+              className="text-sage text-xs font-medium hover:text-sage-dark transition-colors flex items-center gap-1"
+            >
+              <Sparkles size={12} />
+              New meal
+            </button>
+            <button
+              type="button"
+              onClick={clearChat}
+              className="text-text-secondary text-xs hover:text-error transition-colors"
+            >
+              Clear
+            </button>
+          </div>
         )}
       </div>
     </div>
