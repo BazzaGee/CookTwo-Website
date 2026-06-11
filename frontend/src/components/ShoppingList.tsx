@@ -1,6 +1,19 @@
-import { ShoppingBag } from 'lucide-react';
-import { CATEGORIES, type GroceryItem } from '../types/grocery';
-import { CategorySection } from './CategorySection';
+import { useState } from 'react';
+import { ChevronDown, ChevronRight, ShoppingBag, Sparkles } from 'lucide-react';
+import { ItemRow } from './ItemRow';
+import type { Category, GroceryItem } from '../types/grocery';
+
+const CATEGORY_EMOJIS: Record<Category, string> = {
+  Produce: '🥬',
+  Meat: '🥩',
+  Dairy: '🥛',
+  Pantry: '🫙',
+  Household: '🏠',
+  'Personal Care': '🧴',
+  Other: '📦',
+};
+
+const CATEGORY_ORDER: Category[] = ['Produce', 'Meat', 'Dairy', 'Pantry', 'Household', 'Personal Care', 'Other'];
 
 interface Props {
   items: GroceryItem[];
@@ -8,28 +21,152 @@ interface Props {
   onDelete: (id: string) => void;
   onMoveToPantry: () => void;
   isMovingToPantry: boolean;
+  onAskAI: () => void;
+  isAILoading: boolean;
+  onReclassifyItem?: (id: string, category: Category, isFood: boolean) => void;
 }
 
-export function ShoppingList({ items, onToggle, onDelete, onMoveToPantry, isMovingToPantry }: Props) {
+export function ShoppingList({ items, onToggle, onDelete, onMoveToPantry, isMovingToPantry, onAskAI, isAILoading, onReclassifyItem }: Props) {
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<Category>>(new Set());
+
   const checkedItems = items.filter((i) => i.isChecked);
   const checkedFoodCount = checkedItems.filter((i) => i.isFood).length;
   const checkedNonFoodCount = checkedItems.filter((i) => !i.isFood).length;
+  const needsReviewCount = items.filter((i) => i.needsReview).length;
+
+  function toggleCategory(category: Category) {
+    setCollapsedCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(category)) next.delete(category);
+      else next.add(category);
+      return next;
+    });
+  }
+
+  function expandAll() {
+    setCollapsedCategories(new Set());
+  }
+
+  function collapseAll() {
+    setCollapsedCategories(new Set(CATEGORY_ORDER));
+  }
+
+  const allExpanded = collapsedCategories.size === 0;
+  const activeCategories = CATEGORY_ORDER.filter((c) => items.some((i) => i.category === c));
+  const allCollapsed = activeCategories.every((c) => collapsedCategories.has(c));
 
   return (
     <div>
-      {CATEGORIES.map((category) => {
-        const categoryItems = items.filter((i) => i.category === category);
-        if (categoryItems.length === 0) return null;
-        return (
-          <CategorySection
-            key={category}
-            category={category}
-            items={categoryItems}
-            onToggle={onToggle}
-            onDelete={onDelete}
-          />
-        );
-      })}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <span className="text-text-secondary text-xs font-medium">
+            {items.length} item{items.length !== 1 ? 's' : ''}
+          </span>
+          {needsReviewCount > 0 && (
+            <span className="text-xs text-amber-600 font-medium">
+              · {needsReviewCount} to review
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-1.5">
+          {allCollapsed && (
+            <button
+              type="button"
+              onClick={expandAll}
+              className="text-xs font-medium text-text-secondary hover:text-text-primary px-2 py-1 rounded-md hover:bg-cream-dark transition-colors"
+            >
+              + Expand all
+            </button>
+          )}
+          {allExpanded && (
+            <button
+              type="button"
+              onClick={collapseAll}
+              className="text-xs font-medium text-text-secondary hover:text-text-primary px-2 py-1 rounded-md hover:bg-cream-dark transition-colors"
+            >
+              − Collapse all
+            </button>
+          )}
+          {!allExpanded && !allCollapsed && (
+            <>
+              <button
+                type="button"
+                onClick={expandAll}
+                className="text-xs font-medium text-text-secondary hover:text-text-primary px-2 py-1 rounded-md hover:bg-cream-dark transition-colors"
+              >
+                + Expand all
+              </button>
+              <button
+                type="button"
+                onClick={collapseAll}
+                className="text-xs font-medium text-text-secondary hover:text-text-primary px-2 py-1 rounded-md hover:bg-cream-dark transition-colors"
+              >
+                − Collapse all
+              </button>
+            </>
+          )}
+          <button
+            type="button"
+            onClick={onAskAI}
+            disabled={isAILoading}
+            className="flex items-center gap-1.5 text-xs font-medium text-terracotta-dark hover:text-terracotta bg-terracotta/10 hover:bg-terracotta/20 px-3 py-1.5 rounded-full transition-colors disabled:opacity-50"
+          >
+            <Sparkles size={12} />
+            {isAILoading ? 'AI sorting…' : 'AI sort check'}
+          </button>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        {CATEGORY_ORDER.map((category) => {
+          const categoryItems = items.filter((i) => i.category === category);
+          if (categoryItems.length === 0) return null;
+
+          const unchecked = categoryItems.filter((i) => !i.isChecked);
+          const checked = categoryItems.filter((i) => i.isChecked);
+          const sorted = [...unchecked, ...checked];
+          const isCollapsed = collapsedCategories.has(category);
+
+          return (
+            <div key={category} className="bg-white border border-border rounded-2xl overflow-hidden">
+              <button
+                type="button"
+                onClick={() => toggleCategory(category)}
+                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-cream-dark transition-colors"
+              >
+                <span className="text-text-secondary" aria-hidden>
+                  {isCollapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
+                </span>
+                <span className="text-base" aria-hidden>{CATEGORY_EMOJIS[category]}</span>
+                <span className="text-text-primary text-sm font-semibold flex-1 text-left">{category}</span>
+                {category === 'Other' ? (
+                  <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                    {unchecked.length} item{unchecked.length !== 1 ? 's' : ''}
+                  </span>
+                ) : (
+                  <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-terracotta/10 text-terracotta-dark">
+                    {unchecked.length > 0 ? `${unchecked.length} to buy` : 'done'}
+                  </span>
+                )}
+              </button>
+
+              {!isCollapsed && (
+                <ul className="border-t border-border/60 relative">
+                  {sorted.map((item) => (
+                    <ItemRow
+                      key={item.id}
+                      item={item}
+                      onToggle={onToggle}
+                      onDelete={onDelete}
+                      onReclassify={onReclassifyItem}
+                    />
+                  ))}
+                </ul>
+              )}
+            </div>
+          );
+        })}
+      </div>
 
       {checkedItems.length > 0 && (
         <div className="mt-4 mb-2">
@@ -37,7 +174,7 @@ export function ShoppingList({ items, onToggle, onDelete, onMoveToPantry, isMovi
             type="button"
             onClick={onMoveToPantry}
             disabled={isMovingToPantry}
-            className="w-full flex items-center justify-center gap-2 bg-sage/10 border border-sage/20 text-sage-dark rounded-2xl px-5 py-3 text-base font-medium hover:bg-sage/20 active:scale-[0.98] transition-all disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 bg-terracotta/10 border-2 border-terracotta/30 text-terracotta-dark rounded-2xl px-5 py-3 text-base font-medium hover:bg-terracotta/20 active:scale-[0.98] transition-all disabled:opacity-50"
           >
             <ShoppingBag size={18} />
             {isMovingToPantry ? (

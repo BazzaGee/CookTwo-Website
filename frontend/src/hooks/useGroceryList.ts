@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch, getWsBaseUrl } from '../lib/api';
 import { useAuthStore } from '../stores/authStore';
-import type { GroceryItem, PartnerSlot, SyncEvent } from '../types/grocery';
+import type { GroceryItem, PartnerSlot, SyncEvent, Category } from '../types/grocery';
 import { drainQueue, pushToQueue, getQueueLength } from '../lib/offlineQueue';
 
 export type ConnectionState = 'idle' | 'connecting' | 'open' | 'closed';
@@ -74,6 +74,9 @@ export function useGroceryList() {
         if (event.type === 'items_moved') {
           const deletedSet = new Set(event.deletedIds);
           return old.filter((i) => !deletedSet.has(i.id));
+        }
+        if (event.type === 'item_updated') {
+          return old.map((i) => (i.id === event.item.id ? event.item : i));
         }
         return old;
       });
@@ -165,6 +168,7 @@ export function useGroceryList() {
           isChecked: false,
           isFood: true,
           brand: '',
+          needsReview: true,
           addedByPartnerId: partnerId,
           addedByPartnerSlot: partnerSlot,
           createdAt: Date.now(),
@@ -260,6 +264,46 @@ export function useGroceryList() {
     },
   });
 
+  const reclassifyItemMutation = useMutation({
+    mutationFn: ({ id, category, isFood }: { id: string; category: Category; isFood: boolean }) =>
+      apiFetch<GroceryItem>(`/api/household/${householdId}/items/${id}`, {
+        method: 'PATCH',
+        body: { category, isFood, needsReview: false },
+        token,
+      }),
+    onMutate: async ({ id, category, isFood }) => {
+      await queryClient.cancelQueries({ queryKey: QUERY_KEY(householdId) });
+      const previous = queryClient.getQueryData<GroceryItem[]>(QUERY_KEY(householdId));
+      queryClient.setQueryData<GroceryItem[]>(QUERY_KEY(householdId), (old) => {
+        if (!old) return old;
+        return old.map((i) =>
+          i.id === id ? { ...i, category: category as GroceryItem['category'], isFood, needsReview: false } : i,
+        );
+      });
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(QUERY_KEY(householdId), context.previous);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEY(householdId) });
+    },
+  });
+
+  const reclassifyAIMutation = useMutation({
+    mutationFn: () =>
+      apiFetch<{ reclassified: Array<{ id: string; type: string; category: Category; isFood: boolean; name: string }>; count: number }>(`/api/household/${householdId}/reclassify`, {
+        method: 'POST',
+        body: { scope: 'items' },
+        token,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEY(householdId) });
+    },
+  });
+
   return {
     items: itemsQuery.data ?? [],
     isLoading: itemsQuery.isLoading,
@@ -273,5 +317,8 @@ export function useGroceryList() {
     connectionState: connState,
     isOnline,
     queuedCount: queueLen,
+    reclassifyItem: reclassifyItemMutation.mutate,
+    reclassifyWithAI: reclassifyAIMutation.mutate,
+    isAIReclassifying: reclassifyAIMutation.isPending,
   };
 }

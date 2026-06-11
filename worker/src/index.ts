@@ -8,7 +8,10 @@ import { handleGetWeekPlan, handleGenerateWeekPlan, handleConfirmMeal } from './
 import { handleGetRecipes, handleSaveRecipe, handleDeleteRecipe } from './routes/recipes';
 import { handleMealChat } from './routes/mealChat';
 import { generateMeal, type GeneratedMeal } from './lib/ai';
+import { generateMealImage } from './lib/image-gen';
+import { parsePantryWithAI } from './lib/ai-pantry-parser';
 import type { Env } from './env';
+import type { Category } from './durable-objects/HouseholdSync';
 
 export { HouseholdSync, InviteStore };
 
@@ -27,7 +30,7 @@ async function verifyTokenForWs(
 const app = new Hono<{ Bindings: Env }>();
 
 app.use('*', cors({
-  origin: ['http://localhost:5173', 'http://127.0.0.1:5173', 'https://cfs-app.pages.dev'],
+  origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'http://localhost:5176', 'http://localhost:5177', 'http://localhost:5178', 'http://localhost:5179', 'http://localhost:5180', 'http://127.0.0.1:5173', 'https://cfs-app.pages.dev'],
   credentials: true,
 }));
 
@@ -357,6 +360,18 @@ app.post('/api/household/:id/pantry/bulk', async (c) => {
   });
 });
 
+app.patch('/api/household/:id/items/:itemId', async (c) => {
+  const denied = await requireAuth(c);
+  if (denied) return denied;
+  const stub = getStub(c, c.req.param('id'));
+  const body = await c.req.json();
+  return stub.fetch(`https://do/items/${c.req.param('itemId')}`, {
+    method: 'PATCH',
+    body: JSON.stringify(body),
+    headers: { 'content-type': 'application/json' },
+  });
+});
+
 app.delete('/api/household/:id/pantry/:itemId', async (c) => {
   const denied = await requireAuth(c);
   if (denied) return denied;
@@ -364,6 +379,113 @@ app.delete('/api/household/:id/pantry/:itemId', async (c) => {
   return stub.fetch(`https://do/pantry/${c.req.param('itemId')}`, {
     method: 'DELETE',
   });
+});
+
+app.patch('/api/household/:id/pantry/:itemId', async (c) => {
+  const denied = await requireAuth(c);
+  if (denied) return denied;
+  const stub = getStub(c, c.req.param('id'));
+  const body = await c.req.json();
+  return stub.fetch(`https://do/pantry/${c.req.param('itemId')}`, {
+    method: 'PATCH',
+    body: JSON.stringify(body),
+    headers: { 'content-type': 'application/json' },
+  });
+});
+
+app.post('/api/household/:id/reclassify', async (c) => {
+  const denied = await requireAuth(c);
+  if (denied) return denied;
+
+  const householdId = c.req.param('id') as string;
+  const body = (await c.req.json().catch(() => ({}))) as { scope?: 'pantry' | 'items' | 'all' };
+  const scope = body.scope || 'all';
+  const stub = getStub(c, householdId);
+
+  const provider = (c.env.AI_PROVIDER || 'deepseek') as 'deepseek' | 'alibaba' | 'zai';
+  const apiKey = (c.env as unknown as Record<string, unknown>)[
+    provider === 'alibaba' ? 'ALIBABA_KEY' : provider === 'zai' ? 'ZAI_KEY' : 'DEEPSEEK_KEY'
+  ] as string;
+
+  if (!apiKey) {
+    return c.json({ error: 'AI not configured' }, 503);
+  }
+
+  const updatedItems: Array<{ id: string; type: 'pantry' | 'item'; category: Category; isFood: boolean; name: string }> = [];
+
+  if (scope === 'all' || scope === 'items') {
+    const itemsRes = await stub.fetch('https://do/items');
+    const items = (await itemsRes.json()) as Array<{ id: string; name: string; needsReview: boolean; category: string }>;
+    const reviewItems = items.filter((i) => i.needsReview || i.category === 'Other');
+
+    if (reviewItems.length > 0) {
+      const aiInputs = reviewItems.map((i) => i.name);
+      try {
+        const aiResults = await parsePantryWithAI(aiInputs, apiKey);
+        for (let j = 0; j < reviewItems.length; j++) {
+          const item = reviewItems[j]!;
+          const aiResult = aiResults[j];
+          if (aiResult && aiResult.category !== item.category) {
+            const patchRes = await stub.fetch(`https://do/items/${item.id}`, {
+              method: 'PATCH',
+              body: JSON.stringify({ category: aiResult.category, isFood: aiResult.isFood, needsReview: false }),
+              headers: { 'content-type': 'application/json' },
+            });
+            if (patchRes.ok) {
+              const patched = (await patchRes.json()) as { id: string; category: Category; isFood: boolean; name: string };
+              updatedItems.push({ id: patched.id, type: 'item', category: patched.category, isFood: patched.isFood, name: patched.name });
+            }
+          } else if (aiResult) {
+            await stub.fetch(`https://do/items/${item.id}`, {
+              method: 'PATCH',
+              body: JSON.stringify({ needsReview: false }),
+              headers: { 'content-type': 'application/json' },
+            });
+          }
+        }
+      } catch (err) {
+        console.error('AI reclassification failed for items:', err);
+      }
+    }
+  }
+
+  if (scope === 'all' || scope === 'pantry') {
+    const pantryRes = await stub.fetch('https://do/pantry');
+    const pantryItems = (await pantryRes.json()) as Array<{ id: string; name: string; needsReview: boolean; category: string }>;
+    const reviewItems = pantryItems.filter((i) => i.needsReview || i.category === 'Other');
+
+    if (reviewItems.length > 0) {
+      const aiInputs = reviewItems.map((i) => i.name);
+      try {
+        const aiResults = await parsePantryWithAI(aiInputs, apiKey);
+        for (let j = 0; j < reviewItems.length; j++) {
+          const item = reviewItems[j]!;
+          const aiResult = aiResults[j];
+          if (aiResult && aiResult.category !== item.category) {
+            const patchRes = await stub.fetch(`https://do/pantry/${item.id}`, {
+              method: 'PATCH',
+              body: JSON.stringify({ category: aiResult.category, isFood: aiResult.isFood, needsReview: false, name: aiResult.name }),
+              headers: { 'content-type': 'application/json' },
+            });
+            if (patchRes.ok) {
+              const patched = (await patchRes.json()) as { id: string; category: Category; isFood: boolean; name: string };
+              updatedItems.push({ id: patched.id, type: 'pantry', category: patched.category, isFood: patched.isFood, name: patched.name });
+            }
+          } else if (aiResult) {
+            await stub.fetch(`https://do/pantry/${item.id}`, {
+              method: 'PATCH',
+              body: JSON.stringify({ needsReview: false, name: aiResult.name }),
+              headers: { 'content-type': 'application/json' },
+            });
+          }
+        }
+      } catch (err) {
+        console.error('AI reclassification failed for pantry:', err);
+      }
+    }
+  }
+
+  return c.json({ reclassified: updatedItems, count: updatedItems.length });
 });
 
 app.post('/api/household/:id/meal-plan/generate', async (c) => {
@@ -417,6 +539,19 @@ app.post('/api/household/:id/meal-chat', async (c) => {
   const denied = await requireAuth(c);
   if (denied) return denied;
   return handleMealChat(c);
+});
+
+app.post('/api/household/:id/meal-image', async (c) => {
+  const denied = await requireAuth(c);
+  if (denied) return denied;
+
+  const meal = await c.req.json<GeneratedMeal>();
+  if (!meal.name) return jsonError('meal name is required', 400);
+
+  const url = await generateMealImage(c.env, meal);
+  if (!url) return c.json({ error: 'Image generation failed. Please try again later.' }, 503);
+
+  return c.json({ url });
 });
 
 app.get('/api/household/:id/recipes', async (c) => {

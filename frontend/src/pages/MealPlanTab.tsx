@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect, type FormEvent } from 'react';
-import { Sparkles, Clock, Plus, Check, CalendarDays, Bookmark, Send, ShoppingCart, Package, ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
+import { Sparkles, Clock, Plus, Check, CalendarDays, Bookmark, Send, ShoppingCart, Package, ChevronDown, ChevronUp, Trash2, ImageIcon, RefreshCw, AlertCircle } from 'lucide-react';
 import { useMealChat, type ChatMessage } from '../hooks/useMealChat';
 import { useRecipes } from '../hooks/useRecipes';
 import { useWeekPlan } from '../hooks/useWeekPlan';
 import { useGroceryList } from '../hooks/useGroceryList';
+import { useMealImage } from '../hooks/useMealImage';
 
 import type { GeneratedMeal } from '../types/meal';
 
@@ -247,6 +248,7 @@ function InlineMealCard({ meal }: { meal: GeneratedMeal }) {
   const haveCount = meal.ingredients.filter((i) => i.have).length;
   const { addItem } = useGroceryList();
   const [addedMissing, setAddedMissing] = useState(false);
+  const { url: imageUrl, generating: imageGenerating, error: imageError, generate: generateImage } = useMealImage(meal.name);
 
   function handleAddMissing() {
     const missing = meal.ingredients.filter((i) => !i.have);
@@ -308,6 +310,15 @@ function InlineMealCard({ meal }: { meal: GeneratedMeal }) {
 
       {expanded && (
         <div className="px-4 py-3 border-t border-border/50 space-y-3">
+          {imageUrl && (
+            <div>
+              <p className="text-text-secondary text-[10px] uppercase tracking-[0.15em] font-medium mb-2">Photo</p>
+              <img src={imageUrl} alt={meal.name} className="w-full rounded-lg object-cover aspect-square mb-2" loading="lazy" />
+            </div>
+          )}
+          {imageError && !imageGenerating && (
+            <p className="text-error text-xs flex items-center gap-1"><AlertCircle size={12} /> {imageError}</p>
+          )}
           <div>
             <p className="text-text-secondary text-[10px] uppercase tracking-[0.15em] font-medium mb-2">Ingredients</p>
             <ul className="space-y-1.5">
@@ -352,6 +363,22 @@ function InlineMealCard({ meal }: { meal: GeneratedMeal }) {
       )}
 
       <div className="px-4 py-2.5 border-t border-border/50 flex gap-2">
+        <button
+          type="button"
+          onClick={() => generateImage(meal)}
+          disabled={imageGenerating}
+          className={`text-xs font-medium py-2 px-3 rounded-lg transition-all flex items-center gap-1.5 ${
+            imageUrl
+              ? 'bg-sage/10 text-sage border border-sage/30'
+              : 'bg-white text-text-secondary border border-border hover:bg-cream'
+          } disabled:opacity-40`}
+        >
+          {imageGenerating
+            ? <RefreshCw size={12} className="animate-spin" />
+            : <ImageIcon size={12} />
+          }
+          {imageGenerating ? 'Generating...' : imageUrl ? 'Regenerate' : 'Image'}
+        </button>
         <button
           type="button"
           onClick={handleAddMissing}
@@ -477,6 +504,7 @@ function SavedRecipeCard({
   const confirmTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { addItem } = useGroceryList();
   const [addedMissing, setAddedMissing] = useState(false);
+  const { url: imageUrl, generating: imageGenerating, error: imageError, generate: generateImage } = useMealImage(meal.name);
 
   const missingCount = meal.ingredients.filter((i) => !i.have).length;
 
@@ -561,6 +589,15 @@ function SavedRecipeCard({
                   </div>
                 ))}
               </div>
+              {imageUrl && (
+                <div className="mb-3">
+                  <p className="text-text-secondary text-[10px] uppercase tracking-[0.15em] font-medium mb-2">Photo</p>
+                  <img src={imageUrl} alt={meal.name} className="w-full rounded-lg object-cover aspect-square" loading="lazy" />
+                </div>
+              )}
+              {imageError && !imageGenerating && (
+                <p className="text-error text-xs flex items-center gap-1 mb-3"><AlertCircle size={12} /> {imageError}</p>
+              )}
             </div>
 
             <div className="px-5 pb-3">
@@ -606,6 +643,22 @@ function SavedRecipeCard({
           </div>
 
           <div className="border-t border-border px-5 py-2.5 flex gap-2">
+            <button
+              type="button"
+              onClick={() => generateImage(meal)}
+              disabled={imageGenerating}
+              className={`text-xs font-medium py-2 px-3 rounded-lg transition-all flex items-center gap-1.5 ${
+                imageUrl
+                  ? 'bg-sage/10 text-sage border border-sage/30'
+                  : 'bg-cream text-text-secondary border border-border hover:bg-cream-dark'
+              } disabled:opacity-40`}
+            >
+              {imageGenerating
+                ? <RefreshCw size={12} className="animate-spin" />
+                : <ImageIcon size={12} />
+              }
+              {imageGenerating ? 'Generating...' : imageUrl ? 'Regenerate' : 'Image'}
+            </button>
             <button
               type="button"
               onClick={handleAddMissing}

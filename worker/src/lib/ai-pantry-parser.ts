@@ -8,62 +8,97 @@ export interface ParsedPantryItem {
   category: Category;
   isFood: boolean;
   confidence: number;
+  needsReview: boolean;
 }
 
-const AI_PARSING_PROMPT = `You are a pantry item parser. Extract structured data from raw text input.
+const AI_PARSING_PROMPT = `You are a grocery item parser for a couples' cooking app. Extract structured data from raw text input.
+
+Categories (use EXACTLY one of these):
+- Produce: fresh fruit, fresh vegetables, frozen vegetables, frozen fruit, herbs, salad greens
+- Meat: raw meat, poultry, fish, seafood, deli meats, sausages, bacon
+- Dairy: milk, cheese, yogurt, butter, cream, eggs, dairy alternatives (almond milk etc.)
+- Pantry: dry goods, condiments, sauces, spices, baking supplies, bread, wraps, snacks, nuts, oils, pasta, rice, cereal, preserves, spreads, frozen processed foods (frozen pizza, frozen meals)
+- Household: cleaning products, paper goods, bin bags, kitchen supplies, light bulbs, batteries, garden supplies
+- Personal Care: toiletries, hygiene products, medications, vitamins, first aid, baby care, feminine hygiene
+- Other: only if nothing else fits
 
 For each item, return:
-- name: The core food product (e.g., "milk", "cheddar", "onion")
+- name: The core product name (lowercase, e.g., "milk", "cheddar", "onion")
 - quantityValue: Numeric amount (e.g., 1, 250, 0.5) or null if not specified
-- quantityUnit: Unit of measurement (e.g., "litre", "g", "cup", "piece") or ""
-- brand: Brand name or descriptor if detected (e.g., "organic", "Swiss", "Whole Foods") or ""
-- category: One of: Produce, Meat, Dairy, Pantry, Other
-- isFood: true if this is a food item, false otherwise
-- confidence: 0-1 score of how confident you are in the parsing
+- quantityUnit: Unit of measurement (e.g., "litre", "g", "cup", "piece", "punnet") or ""
+- brand: Brand name if detected (e.g., "Organic", "Watties") or ""
+- category: One of the 7 categories above
+- isFood: true if this is something you eat or cook with, false for cleaning/hygiene/other non-food
+- confidence: 0-1 score
+- needsReview: false
 
-Rules:
-- "organic", "free-range", "whole" are brands/descriptors, not part of the product name
-- "half an onion" → quantityValue: 0.5, quantityUnit: "", name: "onion"
-- "250g Swiss cheddar" → quantityValue: 250, quantityUnit: "g", brand: "Swiss", name: "cheddar"
-- Non-food items (cleaning supplies, electronics, etc.) → isFood: false, category: "Other"
-- If uncertain, set confidence < 0.7
+Examples:
+Input: "strawberries 2 punnets"
+Output: {"name":"strawberries","quantityValue":2,"quantityUnit":"punnet","brand":"","category":"Produce","isFood":true,"confidence":0.95,"needsReview":false}
 
-Output ONLY valid JSON array, no markdown, no explanation.
+Input: "frozen mixed vegetables 1 kg"
+Output: {"name":"frozen mixed vegetables","quantityValue":1,"quantityUnit":"kg","brand":"","category":"Produce","isFood":true,"confidence":0.9,"needsReview":false}
 
-Input: ["1 litre whole milk", "organic free-range eggs", "iPhone charger", "half an onion"]
-`;
+Input: "shampoo"
+Output: {"name":"shampoo","quantityValue":null,"quantityUnit":"","brand":"","category":"Personal Care","isFood":false,"confidence":0.95,"needsReview":false}
+
+Input: "toilet paper 4 rolls"
+Output: {"name":"toilet paper","quantityValue":4,"quantityUnit":"roll","brand":"","category":"Personal Care","isFood":false,"confidence":0.95,"needsReview":false}
+
+Input: "wraps"
+Output: {"name":"wraps","quantityValue":null,"quantityUnit":"","brand":"","category":"Pantry","isFood":true,"confidence":0.9,"needsReview":false}
+
+Input: "mayonnaise"
+Output: {"name":"mayonnaise","quantityValue":null,"quantityUnit":"","brand":"","category":"Pantry","isFood":true,"confidence":0.9,"needsReview":false}
+
+Input: "frozen chips"
+Output: {"name":"frozen chips","quantityValue":null,"quantityUnit":"","brand":"","category":"Produce","isFood":true,"confidence":0.85,"needsReview":false}
+
+Input: "almonds 250g"
+Output: {"name":"almonds","quantityValue":250,"quantityUnit":"g","brand":"","category":"Pantry","isFood":true,"confidence":0.95,"needsReview":false}
+
+Input: "dish soap"
+Output: {"name":"dish soap","quantityValue":null,"quantityUnit":"","brand":"","category":"Household","isFood":false,"confidence":0.95,"needsReview":false}
+
+Input: "250g Swiss cheddar"
+Output: {"name":"cheddar","quantityValue":250,"quantityUnit":"g","brand":"Swiss","category":"Dairy","isFood":true,"confidence":0.9,"needsReview":false}
+
+Output ONLY a valid JSON array, no markdown, no explanation.`;
 
 export async function parsePantryWithAI(
   rawInputs: string[],
-  deepseekApiKey: string,
+  apiKey: string,
+  provider: 'deepseek' | 'alibaba' | 'zai' = 'deepseek',
+  envProviderConfig?: { baseUrl: string; authHeader: string; authPrefix: string },
 ): Promise<ParsedPantryItem[]> {
   const prompt = `${AI_PARSING_PROMPT}\n\nInput: ${JSON.stringify(rawInputs)}`;
 
-  const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+  let baseUrl = 'https://api.deepseek.com/v1/chat/completions';
+  let authHeader = 'Authorization';
+  let authPrefix = 'Bearer';
+
+  if (envProviderConfig) {
+    baseUrl = envProviderConfig.baseUrl;
+    authHeader = envProviderConfig.authHeader;
+    authPrefix = envProviderConfig.authPrefix;
+  }
+
+  const res = await fetch(baseUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${deepseekApiKey}`,
+      [authHeader]: `${authPrefix} ${apiKey}`,
     },
     body: JSON.stringify({
       model: 'deepseek-chat',
-      max_tokens: 1024,
+      max_tokens: 2048,
       messages: [{ role: 'user', content: prompt }],
     }),
   });
 
   if (!res.ok) {
-    console.error(`DeepSeek API error: ${res.status}`);
-    // Fallback to basic parsing
-    return rawInputs.map((input) => ({
-      name: input,
-      quantityValue: null,
-      quantityUnit: '',
-      brand: '',
-      category: 'Other' as Category,
-      isFood: true,
-      confidence: 0.3,
-    }));
+    console.error(`AI API error: ${res.status}`);
+    return rawInputs.map(fallbackItem);
   }
 
   const data = (await res.json()) as { choices: Array<{ message: { content: string } }> };
@@ -75,16 +110,22 @@ export async function parsePantryWithAI(
       const parsed = JSON.parse(jsonMatch[0]) as ParsedPantryItem[];
       return parsed.map((item) => ({
         ...item,
+        name: (item.name || '').trim(),
         category: isValidCategory(item.category) ? item.category : 'Other',
+        isFood: typeof item.isFood === 'boolean' ? item.isFood : true,
         confidence: Math.min(Math.max(item.confidence ?? 0.5, 0), 1),
+        needsReview: false,
       }));
     }
   } catch {
-    console.error('Failed to parse AI response');
+    console.error('Failed to parse AI response:', text.substring(0, 200));
   }
 
-  // Fallback
-  return rawInputs.map((input) => ({
+  return rawInputs.map(fallbackItem);
+}
+
+function fallbackItem(input: string): ParsedPantryItem {
+  return {
     name: input,
     quantityValue: null,
     quantityUnit: '',
@@ -92,9 +133,10 @@ export async function parsePantryWithAI(
     category: 'Other' as Category,
     isFood: true,
     confidence: 0.3,
-  }));
+    needsReview: true,
+  };
 }
 
 function isValidCategory(value: string): value is Category {
-  return ['Produce', 'Meat', 'Dairy', 'Pantry', 'Other'].includes(value);
+  return ['Produce', 'Meat', 'Dairy', 'Pantry', 'Household', 'Personal Care', 'Other'].includes(value);
 }

@@ -13,6 +13,7 @@ export interface GroceryItem {
   isChecked: boolean;
   isFood: boolean;
   brand: string;
+  needsReview: boolean;
   addedByPartnerId: string;
   addedByPartnerSlot: PartnerSlot;
   createdAt: number;
@@ -29,6 +30,7 @@ export interface PantryItem {
   quantityUnit: string;
   brand: string;
   isFood: boolean;
+  needsReview: boolean;
   addedByPartnerId: string;
   addedByPartnerSlot: PartnerSlot;
   createdAt: number;
@@ -40,7 +42,9 @@ export type SyncEvent =
   | { type: 'item_toggled'; item: GroceryItem }
   | { type: 'item_deleted'; id: string }
   | { type: 'items_moved'; deletedIds: string[]; pantryItems: PantryItem[] }
+  | { type: 'item_updated'; item: GroceryItem }
   | { type: 'pantry_added'; item: PantryItem }
+  | { type: 'pantry_updated'; item: PantryItem }
   | { type: 'pantry_deleted'; id: string }
   | { type: 'hello'; partnerId: string; slot: PartnerSlot; at: number };
 
@@ -52,6 +56,7 @@ interface GroceryItemRow {
   is_checked: number;
   is_food: number;
   brand: string;
+  needs_review: number;
   added_by_partner_id: string;
   added_by_partner_slot: number;
   created_at: number;
@@ -69,6 +74,7 @@ interface PantryItemRow {
   quantity_unit: string;
   brand: string;
   is_food: number;
+  needs_review: number;
   added_by_partner_id: string;
   added_by_partner_slot: number;
   created_at: number;
@@ -84,6 +90,7 @@ function rowToItem(row: GroceryItemRow): GroceryItem {
     isChecked: row.is_checked === 1,
     isFood: (row.is_food ?? 1) === 1,
     brand: (row.brand as string) || '',
+    needsReview: (row.needs_review ?? 0) === 1,
     addedByPartnerId: row.added_by_partner_id,
     addedByPartnerSlot: row.added_by_partner_slot as PartnerSlot,
     createdAt: row.created_at,
@@ -102,6 +109,7 @@ function rowToPantry(row: PantryItemRow): PantryItem {
     quantityUnit: row.quantity_unit || '',
     brand: row.brand || '',
     isFood: row.is_food === 1,
+    needsReview: (row.needs_review ?? 0) === 1,
     addedByPartnerId: row.added_by_partner_id,
     addedByPartnerSlot: row.added_by_partner_slot as PartnerSlot,
     createdAt: row.created_at,
@@ -121,6 +129,7 @@ const SCHEMA = `
     is_checked INTEGER NOT NULL DEFAULT 0,
     is_food INTEGER NOT NULL DEFAULT 1,
     brand TEXT NOT NULL DEFAULT '',
+    needs_review INTEGER NOT NULL DEFAULT 0,
     added_by_partner_id TEXT NOT NULL,
     added_by_partner_slot INTEGER NOT NULL,
     created_at INTEGER NOT NULL,
@@ -139,6 +148,7 @@ const SCHEMA = `
     quantity_unit TEXT DEFAULT '',
     brand TEXT DEFAULT '',
     is_food INTEGER NOT NULL DEFAULT 1,
+    needs_review INTEGER NOT NULL DEFAULT 0,
     added_by_partner_id TEXT NOT NULL,
     added_by_partner_slot INTEGER NOT NULL,
     created_at INTEGER NOT NULL
@@ -186,6 +196,12 @@ export class HouseholdSync {
     } catch { /* column already exists */ }
     try {
       this.state.storage.sql.exec('ALTER TABLE grocery_items ADD COLUMN brand TEXT NOT NULL DEFAULT \'\'');
+    } catch { /* column already exists */ }
+    try {
+      this.state.storage.sql.exec('ALTER TABLE grocery_items ADD COLUMN needs_review INTEGER NOT NULL DEFAULT 0');
+    } catch { /* column already exists */ }
+    try {
+      this.state.storage.sql.exec('ALTER TABLE pantry_items ADD COLUMN needs_review INTEGER NOT NULL DEFAULT 0');
     } catch { /* column already exists */ }
   }
 
@@ -298,6 +314,17 @@ export class HouseholdSync {
         this.broadcast({ type: 'item_toggled', item });
         return this.json(item);
       }
+
+      // PATCH /items/:id — reclassify a grocery item
+      const itemPatchMatch = path.match(/^\/items\/([^/]+)$/);
+      if (itemPatchMatch && method === 'PATCH') {
+        const itemId = itemPatchMatch[1] as string;
+        const body = (await request.json()) as { category?: string; isFood?: boolean; needsReview?: boolean };
+        const item = await this.updateGroceryItem(itemId, body);
+        this.broadcast({ type: 'item_updated', item });
+        return this.json(item);
+      }
+
       const groceryDeleteMatch = path.match(/^\/items\/([^/]+)$/);
       if (groceryDeleteMatch && method === 'DELETE') {
         const itemId = groceryDeleteMatch[1] as string;
@@ -335,6 +362,17 @@ export class HouseholdSync {
         }
         return this.json(items, 201);
       }
+
+      // PATCH /pantry/:id — reclassify a pantry item
+      const pantryPatchMatch = path.match(/^\/pantry\/([^/]+)$/);
+      if (pantryPatchMatch && method === 'PATCH') {
+        const itemId = pantryPatchMatch[1] as string;
+        const body = (await request.json()) as { category?: string; isFood?: boolean; needsReview?: boolean; name?: string };
+        const item = await this.updatePantryItem(itemId, body);
+        this.broadcast({ type: 'pantry_updated', item });
+        return this.json(item);
+      }
+
       const pantryDeleteMatch = path.match(/^\/pantry\/([^/]+)$/);
       if (pantryDeleteMatch && method === 'DELETE') {
         const itemId = pantryDeleteMatch[1] as string;
@@ -364,6 +402,16 @@ export class HouseholdSync {
     });
   }
 
+  private parsedToGroceryFields(parsed: ParsedPantryItem): { name: string; category: string; isFood: number; brand: string; needsReview: number } {
+    return {
+      name: parsed.name,
+      category: parsed.category,
+      isFood: parsed.isFood ? 1 : 0,
+      brand: parsed.brand,
+      needsReview: parsed.needsReview ? 1 : 0,
+    };
+  }
+
   private async getItems(): Promise<GroceryItem[]> {
     const cursor = this.state.storage.sql.exec<GroceryItemRow>(
       'SELECT * FROM grocery_items ORDER BY created_at ASC',
@@ -391,6 +439,7 @@ export class HouseholdSync {
     }
 
     const parsed = parsePantryItemSync(rawInput);
+    const fields = this.parsedToGroceryFields(parsed);
 
     const householdId = (this.state.id as { toString(): string }).toString();
     const id = crypto.randomUUID();
@@ -398,14 +447,15 @@ export class HouseholdSync {
 
     this.state.storage.sql.exec(
       `INSERT INTO grocery_items
-        (id, household_id, name, category, is_checked, is_food, brand, added_by_partner_id, added_by_partner_slot, created_at, updated_at)
-       VALUES (?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?)`,
+        (id, household_id, name, category, is_checked, is_food, brand, needs_review, added_by_partner_id, added_by_partner_slot, created_at, updated_at)
+       VALUES (?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?)`,
       id,
       householdId,
-      parsed.name,
-      parsed.category,
-      parsed.isFood ? 1 : 0,
-      parsed.brand,
+      fields.name,
+      fields.category,
+      fields.isFood,
+      fields.brand,
+      fields.needsReview,
       body.addedByPartnerId,
       body.addedByPartnerSlot,
       now,
@@ -415,11 +465,12 @@ export class HouseholdSync {
     return {
       id,
       householdId,
-      name: parsed.name,
-      category: parsed.category,
+      name: fields.name,
+      category: fields.category as Category,
       isChecked: false,
       isFood: parsed.isFood,
-      brand: parsed.brand,
+      brand: fields.brand,
+      needsReview: parsed.needsReview,
       addedByPartnerId: body.addedByPartnerId,
       addedByPartnerSlot: body.addedByPartnerSlot as PartnerSlot,
       createdAt: now,
@@ -445,18 +496,20 @@ export class HouseholdSync {
       if (!trimmed) continue;
 
       const parsed = parsePantryItemSync(trimmed);
+      const fields = this.parsedToGroceryFields(parsed);
       const id = crypto.randomUUID();
 
       this.state.storage.sql.exec(
         `INSERT INTO grocery_items
-          (id, household_id, name, category, is_checked, is_food, brand, added_by_partner_id, added_by_partner_slot, created_at, updated_at)
-         VALUES (?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?)`,
+          (id, household_id, name, category, is_checked, is_food, brand, needs_review, added_by_partner_id, added_by_partner_slot, created_at, updated_at)
+         VALUES (?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?)`,
         id,
         householdId,
-        parsed.name,
-        parsed.category,
-        parsed.isFood ? 1 : 0,
-        parsed.brand,
+        fields.name,
+        fields.category,
+        fields.isFood,
+        fields.brand,
+        fields.needsReview,
         body.addedByPartnerId,
         body.addedByPartnerSlot,
         now,
@@ -466,11 +519,12 @@ export class HouseholdSync {
       results.push({
         id,
         householdId,
-        name: parsed.name,
-        category: parsed.category,
+        name: fields.name,
+        category: fields.category as Category,
         isChecked: false,
         isFood: parsed.isFood,
-        brand: parsed.brand,
+        brand: fields.brand,
+        needsReview: parsed.needsReview,
         addedByPartnerId: body.addedByPartnerId,
         addedByPartnerSlot: body.addedByPartnerSlot as PartnerSlot,
         createdAt: now,
@@ -479,6 +533,56 @@ export class HouseholdSync {
     }
 
     return results;
+  }
+
+  private async updateGroceryItem(itemId: string, updates: { category?: string; isFood?: boolean; needsReview?: boolean }): Promise<GroceryItem> {
+    const cursor = this.state.storage.sql.exec<GroceryItemRow>(
+      'SELECT * FROM grocery_items WHERE id = ?',
+      itemId,
+    );
+    const existing = Array.from(cursor)[0];
+    if (!existing) throw new Error('item not found');
+
+    const now = Date.now();
+    const newCategory = (updates.category && isCategory(updates.category)) ? updates.category : (existing.category as string);
+    const newIsFood = typeof updates.isFood === 'boolean' ? (updates.isFood ? 1 : 0) : existing.is_food;
+    const newNeedsReview = typeof updates.needsReview === 'boolean' ? (updates.needsReview ? 1 : 0) : 0;
+
+    this.state.storage.sql.exec(
+      'UPDATE grocery_items SET category = ?, is_food = ?, needs_review = ?, updated_at = ? WHERE id = ?',
+      newCategory,
+      newIsFood,
+      newNeedsReview,
+      now,
+      itemId,
+    );
+
+    return rowToItem({ ...existing, category: newCategory, is_food: newIsFood, needs_review: newNeedsReview, updated_at: now });
+  }
+
+  private async updatePantryItem(itemId: string, updates: { category?: string; isFood?: boolean; needsReview?: boolean; name?: string }): Promise<PantryItem> {
+    const cursor = this.state.storage.sql.exec<PantryItemRow>(
+      'SELECT * FROM pantry_items WHERE id = ?',
+      itemId,
+    );
+    const existing = Array.from(cursor)[0];
+    if (!existing) throw new Error('item not found');
+
+    const newCategory = (updates.category && isCategory(updates.category)) ? updates.category : (existing.category as string);
+    const newIsFood = typeof updates.isFood === 'boolean' ? (updates.isFood ? 1 : 0) : existing.is_food;
+    const newNeedsReview = typeof updates.needsReview === 'boolean' ? (updates.needsReview ? 1 : 0) : 0;
+    const newName = (updates.name && updates.name.trim()) ? updates.name.trim() : (existing.name as string);
+
+    this.state.storage.sql.exec(
+      'UPDATE pantry_items SET category = ?, is_food = ?, needs_review = ?, name = ? WHERE id = ?',
+      newCategory,
+      newIsFood,
+      newNeedsReview,
+      newName,
+      itemId,
+    );
+
+    return rowToPantry({ ...existing, name: newName, category: newCategory, is_food: newIsFood, needs_review: newNeedsReview });
   }
 
   private async moveCheckedToPantry(body: {
@@ -504,8 +608,8 @@ export class HouseholdSync {
         const pantryId = crypto.randomUUID();
         this.state.storage.sql.exec(
           `INSERT INTO pantry_items
-            (id, household_id, name, quantity, category, quantity_value, quantity_unit, brand, is_food, added_by_partner_id, added_by_partner_slot, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            (id, household_id, name, quantity, category, quantity_value, quantity_unit, brand, is_food, needs_review, added_by_partner_id, added_by_partner_slot, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           pantryId,
           householdId,
           parsed.name,
@@ -515,6 +619,7 @@ export class HouseholdSync {
           parsed.quantityUnit,
           parsed.brand || item.brand,
           1,
+          parsed.needsReview ? 1 : 0,
           body.addedByPartnerId,
           body.addedByPartnerSlot,
           now,
@@ -529,6 +634,7 @@ export class HouseholdSync {
           quantityUnit: parsed.quantityUnit,
           brand: parsed.brand || item.brand,
           isFood: true,
+          needsReview: parsed.needsReview,
           addedByPartnerId: body.addedByPartnerId,
           addedByPartnerSlot: body.addedByPartnerSlot as PartnerSlot,
           createdAt: now,
@@ -587,7 +693,6 @@ export class HouseholdSync {
       throw new Error('addedByPartnerSlot must be 1 or 2');
     }
 
-    // Parse the raw input using regex (fast, no API calls)
     const parsed = parsePantryItemSync(rawInput);
 
     const householdId = (this.state.id as { toString(): string }).toString();
@@ -596,8 +701,8 @@ export class HouseholdSync {
 
     this.state.storage.sql.exec(
       `INSERT INTO pantry_items
-        (id, household_id, name, quantity, category, quantity_value, quantity_unit, brand, is_food, added_by_partner_id, added_by_partner_slot, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        (id, household_id, name, quantity, category, quantity_value, quantity_unit, brand, is_food, needs_review, added_by_partner_id, added_by_partner_slot, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       id,
       householdId,
       parsed.name,
@@ -607,6 +712,7 @@ export class HouseholdSync {
       parsed.quantityUnit,
       parsed.brand,
       parsed.isFood ? 1 : 0,
+      parsed.needsReview ? 1 : 0,
       body.addedByPartnerId,
       body.addedByPartnerSlot,
       now,
@@ -622,6 +728,7 @@ export class HouseholdSync {
       quantityUnit: parsed.quantityUnit,
       brand: parsed.brand,
       isFood: parsed.isFood,
+      needsReview: parsed.needsReview,
       addedByPartnerId: body.addedByPartnerId,
       addedByPartnerSlot: body.addedByPartnerSlot as PartnerSlot,
       createdAt: now,
@@ -641,14 +748,13 @@ export class HouseholdSync {
       const rawInput = (item.name ?? '').trim();
       if (!rawInput) continue;
 
-      // Parse the raw input using regex (fast, no API calls)
       const parsed = parsePantryItemSync(rawInput);
-
       const id = crypto.randomUUID();
+
       this.state.storage.sql.exec(
         `INSERT INTO pantry_items
-          (id, household_id, name, quantity, category, quantity_value, quantity_unit, brand, is_food, added_by_partner_id, added_by_partner_slot, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          (id, household_id, name, quantity, category, quantity_value, quantity_unit, brand, is_food, needs_review, added_by_partner_id, added_by_partner_slot, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         id,
         householdId,
         parsed.name,
@@ -658,6 +764,7 @@ export class HouseholdSync {
         parsed.quantityUnit,
         parsed.brand,
         parsed.isFood ? 1 : 0,
+        parsed.needsReview ? 1 : 0,
         body.addedByPartnerId,
         body.addedByPartnerSlot,
         now,
@@ -673,6 +780,7 @@ export class HouseholdSync {
         quantityUnit: parsed.quantityUnit,
         brand: parsed.brand,
         isFood: parsed.isFood,
+        needsReview: parsed.needsReview,
         addedByPartnerId: body.addedByPartnerId,
         addedByPartnerSlot: body.addedByPartnerSlot as PartnerSlot,
         createdAt: now,
@@ -695,7 +803,6 @@ export class HouseholdSync {
       const ingredientName = ingredient.name.toLowerCase().trim();
       if (!ingredientName) continue;
 
-      // Find matching pantry item using bidirectional containment
       const cursor = this.state.storage.sql.exec<PantryItemRow>(
         'SELECT * FROM pantry_items',
       );
@@ -704,7 +811,6 @@ export class HouseholdSync {
       let matchedItem: PantryItemRow | null = null;
       for (const row of allItems) {
         const pantryName = (row.name as string).toLowerCase();
-        // Bidirectional containment: ingredient in pantry OR pantry in ingredient
         if (pantryName.includes(ingredientName) || ingredientName.includes(pantryName)) {
           matchedItem = row;
           break;
@@ -716,7 +822,6 @@ export class HouseholdSync {
       const pantryQuantityValue = matchedItem.quantity_value as number | null;
       const pantryQuantityUnit = (matchedItem.quantity_unit as string) || '';
 
-      // If pantry item has no quantity, assume it's fully used and delete it
       if (pantryQuantityValue === null || pantryQuantityValue === undefined) {
         this.state.storage.sql.exec('DELETE FROM pantry_items WHERE id = ?', matchedItem.id);
         removed.push(matchedItem.name as string);
@@ -724,7 +829,6 @@ export class HouseholdSync {
         continue;
       }
 
-      // If units don't match, we can't do math — delete the item (assume fully used)
       if (ingredient.quantityUnit && pantryQuantityUnit && ingredient.quantityUnit.toLowerCase() !== pantryQuantityUnit.toLowerCase()) {
         this.state.storage.sql.exec('DELETE FROM pantry_items WHERE id = ?', matchedItem.id);
         removed.push(matchedItem.name as string);
@@ -732,16 +836,13 @@ export class HouseholdSync {
         continue;
       }
 
-      // Subtract quantity
       const newQuantity = pantryQuantityValue - (ingredient.quantityValue ?? 0);
 
       if (newQuantity <= 0) {
-        // Quantity depleted — remove item
         this.state.storage.sql.exec('DELETE FROM pantry_items WHERE id = ?', matchedItem.id);
         removed.push(matchedItem.name as string);
         this.broadcast({ type: 'pantry_deleted', id: matchedItem.id as string });
       } else {
-        // Update quantity
         this.state.storage.sql.exec(
           'UPDATE pantry_items SET quantity_value = ?, quantity = ? WHERE id = ?',
           newQuantity,

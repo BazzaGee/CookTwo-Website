@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch, getWsBaseUrl } from '../lib/api';
 import { useAuthStore } from '../stores/authStore';
-import type { PantryItem, PartnerSlot, SyncEvent } from '../types/grocery';
+import type { PantryItem, PartnerSlot, SyncEvent, Category } from '../types/grocery';
 
 export type ConnectionState = 'idle' | 'connecting' | 'open' | 'closed';
 
@@ -46,6 +46,9 @@ export function usePantry() {
           const newItems = event.pantryItems.filter((i) => !existing.has(i.id));
           if (newItems.length === 0) return old;
           return [...old, ...newItems];
+        }
+        if (event.type === 'pantry_updated') {
+          return old.map((i) => (i.id === event.item.id ? event.item : i));
         }
         return old;
       });
@@ -167,6 +170,46 @@ export function usePantry() {
     },
   });
 
+  const reclassifyMutation = useMutation({
+    mutationFn: ({ id, category, isFood }: { id: string; category: Category; isFood: boolean }) =>
+      apiFetch<PantryItem>(`/api/household/${householdId}/pantry/${id}`, {
+        method: 'PATCH',
+        body: { category, isFood, needsReview: false },
+        token,
+      }),
+    onMutate: async ({ id, category, isFood }) => {
+      await queryClient.cancelQueries({ queryKey: QUERY_KEY(householdId) });
+      const previous = queryClient.getQueryData<PantryItem[]>(QUERY_KEY(householdId));
+      queryClient.setQueryData<PantryItem[]>(QUERY_KEY(householdId), (old) => {
+        if (!old) return old;
+        return old.map((i) =>
+          i.id === id ? { ...i, category: category as PantryItem['category'], isFood, needsReview: false } : i,
+        );
+      });
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(QUERY_KEY(householdId), context.previous);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEY(householdId) });
+    },
+  });
+
+  const reclassifyAIMutation = useMutation({
+    mutationFn: () =>
+      apiFetch<{ reclassified: Array<{ id: string; type: string; category: Category; isFood: boolean; name: string }>; count: number }>(`/api/household/${householdId}/reclassify`, {
+        method: 'POST',
+        body: { scope: 'pantry' },
+        token,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEY(householdId) });
+    },
+  });
+
   return {
     items: itemsQuery.data ?? [],
     isLoading: itemsQuery.isLoading,
@@ -175,5 +218,8 @@ export function usePantry() {
     deleteItem: deleteMutation.mutate,
     isAdding: addMutation.isPending,
     connectionState: connState,
+    reclassifyItem: reclassifyMutation.mutate,
+    reclassifyWithAI: reclassifyAIMutation.mutate,
+    isAIReclassifying: reclassifyAIMutation.isPending,
   };
 }

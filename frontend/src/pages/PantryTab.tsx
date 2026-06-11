@@ -1,9 +1,9 @@
-// PantryTab v2 - Structured pantry with AI parsing
 import { useState } from 'react';
-import { ChevronDown, ChevronRight, Plus, X } from 'lucide-react';
+import { ChevronDown, ChevronRight, Plus, X, Sparkles } from 'lucide-react';
 import { usePantry } from '../hooks/usePantry';
 import { PartnerDot } from '../components/PartnerDot';
 import type { PantryItem, Category } from '../types/grocery';
+import { FOOD_CATEGORIES } from '../types/grocery';
 
 const CATEGORY_EMOJIS: Record<Category, string> = {
   Produce: '🥬',
@@ -17,8 +17,17 @@ const CATEGORY_EMOJIS: Record<Category, string> = {
 
 const CATEGORY_ORDER: Category[] = ['Produce', 'Meat', 'Dairy', 'Pantry', 'Household', 'Personal Care', 'Other'];
 
+const CATEGORY_CHIPS: Array<{ category: Category; label: string }> = [
+  { category: 'Produce', label: '🥬 Produce' },
+  { category: 'Meat', label: '🥩 Meat' },
+  { category: 'Dairy', label: '🥛 Dairy' },
+  { category: 'Pantry', label: '🫙 Pantry' },
+  { category: 'Household', label: '🏠 Household' },
+  { category: 'Personal Care', label: '🧴 Personal Care' },
+];
+
 export default function PantryTab() {
-  const { items, addItem, deleteItem, isLoading } = usePantry();
+  const { items, addItem, deleteItem, isLoading, reclassifyItem, reclassifyWithAI, isAIReclassifying } = usePantry();
   const [input, setInput] = useState('');
   const [collapsedCategories, setCollapsedCategories] = useState<Set<Category>>(new Set());
 
@@ -39,16 +48,25 @@ export default function PantryTab() {
   function toggleCategory(category: Category) {
     setCollapsedCategories((prev) => {
       const next = new Set(prev);
-      if (next.has(category)) {
-        next.delete(category);
-      } else {
-        next.add(category);
-      }
+      if (next.has(category)) next.delete(category);
+      else next.add(category);
       return next;
     });
   }
 
-  // Group items by category
+  function expandAll() {
+    setCollapsedCategories(new Set());
+  }
+
+  function collapseAll() {
+    setCollapsedCategories(new Set(CATEGORY_ORDER));
+  }
+
+  const needsReviewCount = items.filter((i) => i.needsReview).length;
+  const allExpanded = collapsedCategories.size === 0;
+  const activeCategories = CATEGORY_ORDER.filter((c) => items.some((i) => i.category === c));
+  const allCollapsed = activeCategories.every((c) => collapsedCategories.has(c));
+
   const groupedItems = items.reduce<Record<Category, PantryItem[]>>((acc, item) => {
     const cat = (item.category || 'Other') as Category;
     if (!acc[cat]) acc[cat] = [];
@@ -75,6 +93,9 @@ export default function PantryTab() {
           {items.length === 0
             ? 'Tell us what you have.'
             : `${items.length} item${items.length > 1 ? 's' : ''} in your kitchen.`}
+          {needsReviewCount > 0 && (
+            <span className="text-amber-600 ml-1">· {needsReviewCount} to review</span>
+          )}
         </p>
       </div>
 
@@ -115,69 +136,167 @@ export default function PantryTab() {
           </p>
         </div>
       ) : (
-        <div className="space-y-2">
-          {CATEGORY_ORDER.map((category) => {
-            const categoryItems = groupedItems[category];
-            if (!categoryItems || categoryItems.length === 0) return null;
+        <>
+          {needsReviewCount >= 3 && (
+            <div className="mb-4 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => reclassifyWithAI()}
+                disabled={isAIReclassifying}
+                className="flex items-center gap-1.5 text-xs font-medium text-terracotta-dark hover:text-terracotta bg-terracotta/10 hover:bg-terracotta/20 px-3 py-1.5 rounded-full transition-colors disabled:opacity-50"
+              >
+                <Sparkles size={12} />
+                {isAIReclassifying ? 'AI sorting…' : 'Ask AI to sort'}
+              </button>
+            </div>
+          )}
 
-            const isCollapsed = collapsedCategories.has(category);
-
-            return (
-              <div key={category} className="bg-white border border-border rounded-2xl overflow-hidden">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-text-secondary text-xs font-medium">
+              {items.length} item{items.length !== 1 ? 's' : ''}
+            </span>
+            <div className="flex items-center gap-1.5">
+              {allCollapsed && (
                 <button
                   type="button"
-                  onClick={() => toggleCategory(category)}
-                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-cream-dark transition-colors"
+                  onClick={expandAll}
+                  className="text-xs font-medium text-text-secondary hover:text-text-primary px-2 py-1 rounded-md hover:bg-cream-dark transition-colors"
                 >
-                  <span className="text-lg" aria-hidden>
-                    {isCollapsed ? <ChevronRight size={18} /> : <ChevronDown size={18} />}
-                  </span>
-                  <span className="text-lg" aria-hidden>{CATEGORY_EMOJIS[category]}</span>
-                  <span className="text-text-primary text-base font-semibold flex-1 text-left">{category}</span>
-                  <span className="text-text-secondary text-sm">{categoryItems.length}</span>
+                  + Expand all
                 </button>
+              )}
+              {allExpanded && (
+                <button
+                  type="button"
+                  onClick={collapseAll}
+                  className="text-xs font-medium text-text-secondary hover:text-text-primary px-2 py-1 rounded-md hover:bg-cream-dark transition-colors"
+                >
+                  − Collapse all
+                </button>
+              )}
+              {!allExpanded && !allCollapsed && (
+                <>
+                  <button
+                    type="button"
+                    onClick={expandAll}
+                    className="text-xs font-medium text-text-secondary hover:text-text-primary px-2 py-1 rounded-md hover:bg-cream-dark transition-colors"
+                  >
+                    + Expand all
+                  </button>
+                  <button
+                    type="button"
+                    onClick={collapseAll}
+                    className="text-xs font-medium text-text-secondary hover:text-text-primary px-2 py-1 rounded-md hover:bg-cream-dark transition-colors"
+                  >
+                    − Collapse all
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
 
-                {!isCollapsed && (
-                  <ul className="divide-y divide-border/60">
-                    {categoryItems.map((item) => (
-                      <PantryRow key={item.id} item={item} onDelete={deleteItem} displayText={formatItemDisplay(item)} />
-                    ))}
-                  </ul>
-                )}
-              </div>
-            );
-          })}
-        </div>
+          <div className="space-y-2">
+            {CATEGORY_ORDER.map((category) => {
+              const categoryItems = groupedItems[category];
+              if (!categoryItems || categoryItems.length === 0) return null;
+
+              const isCollapsed = collapsedCategories.has(category);
+
+              return (
+                <div key={category} className="bg-white border border-border rounded-2xl overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => toggleCategory(category)}
+                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-cream-dark transition-colors"
+                  >
+                    <span className="text-lg" aria-hidden>
+                      {isCollapsed ? <ChevronRight size={18} /> : <ChevronDown size={18} />}
+                    </span>
+                    <span className="text-lg" aria-hidden>{CATEGORY_EMOJIS[category]}</span>
+                    <span className="text-text-primary text-base font-semibold flex-1 text-left">{category}</span>
+                    <span className="text-text-secondary text-sm">{categoryItems.length}</span>
+                  </button>
+
+                  {!isCollapsed && (
+                    <ul className="divide-y divide-border/60 relative">
+                      {categoryItems.map((item) => (
+                        <PantryRow
+                          key={item.id}
+                          item={item}
+                          onDelete={deleteItem}
+                          onReclassify={(id, category, isFood) => reclassifyItem({ id, category, isFood })}
+                          displayText={formatItemDisplay(item)}
+                        />
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </>
       )}
     </div>
   );
 }
 
-function PantryRow({ item, onDelete, displayText }: { item: PantryItem; onDelete: (id: string) => void; displayText: string }) {
+function PantryRow({ item, onDelete, onReclassify, displayText }: {
+  item: PantryItem;
+  onDelete: (id: string) => void;
+  onReclassify?: (id: string, category: Category, isFood: boolean) => void;
+  displayText: string;
+}) {
   return (
-    <li className="group flex items-center gap-3 py-3 px-4">
-      {!item.isFood && (
-        <span className="text-error text-sm flex-shrink-0" title="Not a food item">⚠️</span>
-      )}
-      <div className="flex-1">
-        <span className={`text-base leading-snug ${!item.isFood ? 'text-text-secondary' : 'text-text-primary'}`}>{displayText}</span>
+    <li className="group border-b border-border/60 last:border-b-0">
+      <div className="flex items-center gap-3 py-3 px-4">
         {!item.isFood && (
-          <span className="text-error text-xs ml-2">Not a food item</span>
+          <span className="text-error text-sm flex-shrink-0" title="Not a food item">⚠️</span>
         )}
+        <div className="flex-1">
+          <span className={`text-base leading-snug ${!item.isFood ? 'text-text-secondary' : 'text-text-primary'}`}>{displayText}</span>
+          {!item.isFood && (
+            <span className="text-error text-xs ml-2">Not a food item</span>
+          )}
+        </div>
+
+        {!item.needsReview && (
+          <PartnerDot slot={item.addedByPartnerSlot} size={8} />
+        )}
+
+        <button
+          type="button"
+          onClick={() => onDelete(item.id)}
+          aria-label={`Remove ${item.name}`}
+          className={`flex-shrink-0 p-1 rounded-full transition-colors ${
+            !item.isFood
+              ? 'text-error hover:text-error-dark'
+              : 'text-text-secondary/0 group-hover:text-text-secondary hover:!text-error'
+          }`}
+        >
+          <X size={16} />
+        </button>
       </div>
-      <PartnerDot slot={item.addedByPartnerSlot} size={8} />
-      <button
-        type="button"
-        onClick={() => onDelete(item.id)}
-        aria-label={`Remove ${item.name}`}
-        className={`flex-shrink-0 p-1 rounded-full transition-colors ${
-          !item.isFood
-            ? 'text-error hover:text-error-dark'
-            : 'text-text-secondary/0 group-hover:text-text-secondary hover:!text-error'
-        }`}
-      >
-        <X size={16} />
-      </button>
+
+      {item.needsReview && onReclassify && (
+        <div className="px-4 pb-3 border-t border-dashed border-border/40">
+          <div className="flex flex-wrap gap-1.5 pt-2">
+            {CATEGORY_CHIPS.map(({ category, label }) => (
+              <button
+                key={category}
+                type="button"
+                onClick={() => onReclassify(item.id, category, FOOD_CATEGORIES.includes(category))}
+                className={`text-xs px-2.5 py-1.5 rounded-full border transition-colors ${
+                  category === item.category
+                    ? 'bg-sage/10 border-sage/40 text-sage-dark'
+                    : 'border-border/60 bg-white hover:bg-sage/10 hover:border-sage/40 text-text-primary'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </li>
   );
 }

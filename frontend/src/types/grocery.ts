@@ -10,6 +10,7 @@ export interface GroceryItem {
   isChecked: boolean;
   isFood: boolean;
   brand: string;
+  needsReview: boolean;
   addedByPartnerId: string;
   addedByPartnerSlot: PartnerSlot;
   createdAt: number;
@@ -26,6 +27,7 @@ export interface PantryItem {
   quantityUnit: string;
   brand: string;
   isFood: boolean;
+  needsReview: boolean;
   addedByPartnerId: string;
   addedByPartnerSlot: PartnerSlot;
   createdAt: number;
@@ -37,8 +39,12 @@ export type SyncEvent =
   | { type: 'item_toggled'; item: GroceryItem }
   | { type: 'item_deleted'; id: string }
   | { type: 'items_moved'; deletedIds: string[]; pantryItems: PantryItem[] }
+  | { type: 'item_updated'; item: GroceryItem }
   | { type: 'pantry_added'; item: PantryItem }
+  | { type: 'pantry_updated'; item: PantryItem }
   | { type: 'pantry_deleted'; id: string }
   | { type: 'hello'; partnerId: string; slot: PartnerSlot; at: number };
 
 export const CATEGORIES: readonly Category[] = ['Produce', 'Meat', 'Dairy', 'Pantry', 'Household', 'Personal Care', 'Other'] as const;
+
+export const FOOD_CATEGORIES: readonly Category[] = ['Produce', 'Meat', 'Dairy', 'Pantry'] as const;
