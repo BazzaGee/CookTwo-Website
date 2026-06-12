@@ -1,10 +1,9 @@
 import { useGroceryList } from '../hooks/useGroceryList';
 import { ShoppingList } from '../components/ShoppingList';
 import { AddItemForm } from '../components/AddItemForm';
-import type { Category } from '../types/grocery';
 
 export default function ShoppingTab() {
-  const { items, addItem, toggleItem, deleteItem, moveCheckedToPantry, isMovingToPantry, isLoading, isOnline, queuedCount, reclassifyItem, reclassifyWithAI, isAIReclassifying } = useGroceryList();
+  const { items, addItem, toggleItem, deleteItem, moveCheckedToPantry, isMovingToPantry, isLoading, isOnline, queuedCount, reclassifyWithAI, isAIReclassifying } = useGroceryList();
 
   function handleAdd(input: { name: string }) {
     const text = input.name.trim();
@@ -13,10 +12,6 @@ export default function ShoppingTab() {
     for (const part of parts) {
       addItem({ name: part });
     }
-  }
-
-  function handleReclassify(id: string, category: Category, isFood: boolean) {
-    reclassifyItem({ id, category, isFood });
   }
 
   return (
@@ -74,7 +69,6 @@ export default function ShoppingTab() {
             isMovingToPantry={isMovingToPantry}
             onAskAI={() => reclassifyWithAI()}
             isAILoading={isAIReclassifying}
-            onReclassifyItem={handleReclassify}
           />
         )}
       </div>

@@ -1,25 +1,14 @@
 import { Check, X } from 'lucide-react';
 import { PartnerDot } from './PartnerDot';
-import type { GroceryItem, Category } from '../types/grocery';
-import { FOOD_CATEGORIES } from '../types/grocery';
-
-const CATEGORY_CHIPS: Array<{ category: Category; label: string }> = [
-  { category: 'Produce', label: '🥬 Produce' },
-  { category: 'Meat', label: '🥩 Meat' },
-  { category: 'Dairy', label: '🥛 Dairy' },
-  { category: 'Pantry', label: '🫙 Pantry' },
-  { category: 'Household', label: '🏠 Household' },
-  { category: 'Personal Care', label: '🧴 Personal Care' },
-];
+import type { GroceryItem } from '../types/grocery';
 
 interface Props {
   item: GroceryItem;
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
-  onReclassify?: (id: string, category: Category, isFood: boolean) => void;
 }
 
-export function ItemRow({ item, onToggle, onDelete, onReclassify }: Props) {
+export function ItemRow({ item, onToggle, onDelete }: Props) {
   return (
     <li className="border-b border-border/60 last:border-b-0 group">
       <div className="flex items-center gap-3 py-3 px-4">
@@ -68,26 +57,7 @@ export function ItemRow({ item, onToggle, onDelete, onReclassify }: Props) {
         </button>
       </div>
 
-      {item.needsReview && onReclassify && (
-        <div className="px-4 pb-3 border-t border-dashed border-border/40">
-          <div className="flex flex-wrap gap-1.5 pt-2">
-            {CATEGORY_CHIPS.map(({ category, label }) => (
-              <button
-                key={category}
-                type="button"
-                onClick={() => onReclassify(item.id, category, FOOD_CATEGORIES.includes(category))}
-                className={`text-xs px-2.5 py-1.5 rounded-full border transition-colors ${
-                  category === item.category
-                    ? 'bg-sage/10 border-sage/40 text-sage-dark'
-                    : 'border-border/60 bg-white hover:bg-sage/10 hover:border-sage/40 text-text-primary'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+
     </li>
   );
 }

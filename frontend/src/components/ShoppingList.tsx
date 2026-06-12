@@ -23,10 +23,9 @@ interface Props {
   isMovingToPantry: boolean;
   onAskAI: () => void;
   isAILoading: boolean;
-  onReclassifyItem?: (id: string, category: Category, isFood: boolean) => void;
 }
 
-export function ShoppingList({ items, onToggle, onDelete, onMoveToPantry, isMovingToPantry, onAskAI, isAILoading, onReclassifyItem }: Props) {
+export function ShoppingList({ items, onToggle, onDelete, onMoveToPantry, isMovingToPantry, onAskAI, isAILoading }: Props) {
   const [collapsedCategories, setCollapsedCategories] = useState<Set<Category>>(new Set());
 
   const checkedItems = items.filter((i) => i.isChecked);
@@ -158,7 +157,6 @@ export function ShoppingList({ items, onToggle, onDelete, onMoveToPantry, isMovi
                       item={item}
                       onToggle={onToggle}
                       onDelete={onDelete}
-                      onReclassify={onReclassifyItem}
                     />
                   ))}
                 </ul>
