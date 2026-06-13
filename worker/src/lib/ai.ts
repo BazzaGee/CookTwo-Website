@@ -60,7 +60,7 @@ const PROVIDER_CONFIG = {
   },
 } as const;
 
-function buildPrompt(
+export function buildPrompt(
   pantryItems: Array<{ name: string; quantity: string; category?: string; quantityValue?: number | null; quantityUnit?: string; brand?: string }>,
   partner1Diet: Diet,
   partner2Diet: Diet,
@@ -73,9 +73,11 @@ function buildPrompt(
 ): string {
   const pantryList = pantryItems.map((i) => {
     const qty = i.quantityValue && i.quantityUnit ? `${i.quantityValue} ${i.quantityUnit}` : (i.quantity || '');
-    const cat = i.category ? `, ${i.category}` : '';
-    const brand = i.brand ? `, ${i.brand}` : '';
-    return `${i.name}${qty ? ` (${qty}${cat}${brand})` : (cat || brand ? ` (${cat}${brand})` : '')}`;
+    const parts: string[] = [];
+    if (qty) parts.push(qty);
+    if (i.category) parts.push(i.category);
+    if (i.brand) parts.push(i.brand);
+    return `${i.name}${parts.length > 0 ? ` (${parts.join(', ')})` : ''}`;
   }).join(', ') || 'none listed';
 
   const allAllergenSet = new Set<string>();
@@ -220,13 +222,13 @@ function tokenMatchesAllergen(token: string, allergen: string): boolean {
   const words = normalizedToken.split(/\s+/);
   for (const word of words) {
     if (word === allergen) return true;
-    if (word.includes(allergen)) return true;
+    if (allergen.length >= 4 && word.includes(allergen)) return true;
     if (allergen.includes(word) && word.length > 3) return true;
   }
   return false;
 }
 
-function assertMealIsSafe(meal: GeneratedMeal, profiles: PartnerContext[]): boolean {
+export function assertMealIsSafe(meal: GeneratedMeal, profiles: PartnerContext[]): boolean {
   const allAllergens = new Set<string>();
   for (const p of profiles) {
     for (const a of (p.allergens ?? [])) {
@@ -332,7 +334,7 @@ export interface ChatResponse {
   };
 }
 
-interface PartnerContext {
+export interface PartnerContext {
   name: string;
   diet: Diet;
   allergens: string[];
@@ -376,14 +378,16 @@ function buildAllergenList(profiles: PartnerContext[]): { combinedList: string; 
   return { combinedList, hasAllergens, p1Line, p2Line };
 }
 
-function buildChatSystemPrompt(
+export function buildChatSystemPrompt(
   pantryItems: Array<{ name: string; quantity: string; category?: string; quantityValue?: number | null; quantityUnit?: string }>,
   profiles: PartnerContext[],
 ): string {
   const pantryList = pantryItems.map((i) => {
     const qty = i.quantityValue && i.quantityUnit ? `${i.quantityValue} ${i.quantityUnit}` : (i.quantity || '');
-    const cat = i.category ? `, ${i.category}` : '';
-    return `${i.name}${qty ? ` (${qty}${cat})` : (cat ? ` (${cat})` : '')}`;
+    const parts: string[] = [];
+    if (qty) parts.push(qty);
+    if (i.category) parts.push(i.category);
+    return `${i.name}${parts.length > 0 ? ` (${parts.join(', ')})` : ''}`;
   }).join(', ') || 'empty';
 
   const p1 = profiles.find((p) => p.slot === 1);

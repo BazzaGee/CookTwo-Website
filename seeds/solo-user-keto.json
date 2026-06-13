@@ -1,0 +1,34 @@
+{
+  "name": "solo-user-keto",
+  "description": "Single user on keto, high-protein goal",
+  "partners": [
+    {
+      "id": "seed-solo-p1",
+      "slot": 1,
+      "name": "Jordan",
+      "diet": "keto",
+      "allergens": ["dairy"],
+      "body": {
+        "weightKg": 75,
+        "heightCm": 178,
+        "age": 35,
+        "gender": "male",
+        "activityLevel": "active",
+        "goal": "lose"
+      },
+      "tdee": { "bmr": 1758, "tdee": 3033, "targetCalories": 2533 }
+    }
+  ],
+  "pantry": [
+    { "name": "chicken breast", "quantity": "500g", "category": "Meat" },
+    { "name": "avocado", "quantity": "3", "category": "Produce" },
+    { "name": "eggs", "quantity": "12", "category": "Dairy" },
+    { "name": "almond flour", "quantity": "1 cup", "category": "Pantry" },
+    { "name": "coconut oil", "quantity": "1 bottle", "category": "Pantry" },
+    { "name": "broccoli", "quantity": "2 heads", "category": "Produce" },
+    { "name": "salmon", "quantity": "400g", "category": "Meat" },
+    { "name": "olive oil", "quantity": "1 bottle", "category": "Pantry" },
+    { "name": "cauliflower", "quantity": "1 head", "category": "Produce" },
+    { "name": "sea salt", "quantity": "", "category": "Pantry" }
+  ]
+}
