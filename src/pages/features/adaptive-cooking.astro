@@ -1,0 +1,247 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PhoneFrame from '../../components/app-mocks/PhoneFrame.astro';
+---
+
+<BaseLayout title="Adaptive Shared Cooking — CookTwo" description="One recipe, two plates, both perfect. CookTwo calculates TDEE-based portions so couples with different dietary goals can share the same meal.">
+  <section class="section-padding">
+    <div class="container-custom">
+      <div class="max-w-3xl mx-auto text-center">
+        <span class="badge-signature mb-4 inline-block">Signature Feature</span>
+        <h1 class="text-4xl md:text-6xl font-bold text-text-primary mb-6">One Recipe. Two Plates.<br/>Both Perfect.</h1>
+        <p class="text-xl text-text-secondary leading-relaxed">
+          Cook one meal. Eat different portions. CookTwo uses clinical-grade TDEE calculations to serve each partner the exact amount their body needs — from the same pot.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="pb-20">
+    <div class="container-custom">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+        <div class="order-2 lg:order-1">
+          <h2 class="text-2xl md:text-3xl font-bold text-text-primary mb-4">A real example, from the live app</h2>
+          <p class="text-text-secondary leading-relaxed mb-6">
+            Alex is building muscle. Jordan is losing weight and is vegan. Same kitchen, same pan — the AI plates one stir-fry two ways: chicken for Alex, tofu for Jordan, each with its own macros.
+          </p>
+          <ul class="space-y-3">
+            <li class="flex items-start gap-3"><span class="w-2 h-2 rounded-full bg-sage mt-2 flex-shrink-0"></span><span class="text-sm text-text-secondary"><strong class="text-text-primary">Alex's plate</strong> — ~700 cal, 52g protein. Larger chicken &amp; rice portion for a caloric surplus.</span></li>
+            <li class="flex items-start gap-3"><span class="w-2 h-2 rounded-full bg-terracotta mt-2 flex-shrink-0"></span><span class="text-sm text-text-secondary"><strong class="text-text-primary">Jordan's plate</strong> — ~430 cal, 28g protein. Tofu, extra vegetables, smaller rice portion for a deficit.</span></li>
+            <li class="flex items-start gap-3"><span class="w-2 h-2 rounded-full bg-sage mt-2 flex-shrink-0"></span><span class="text-sm text-text-secondary"><strong class="text-text-primary">Allergen-safe.</strong> Meals are blocked server-side if they contain a partner's allergen or its cross-reactive derivatives.</span></li>
+          </ul>
+        </div>
+        <div class="order-1 lg:order-2">
+          <PhoneFrame src="/images/app/03-adaptive-meal-full.webp" alt="CookTwo adaptive meal: Alex's plate and Jordan's plate with personalised macros" class="max-w-[260px]" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="pb-20">
+    <div class="container-custom">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div class="card border-sage/30">
+          <div class="flex items-center gap-3 mb-6">
+            <div class="w-10 h-10 rounded-full bg-sage flex items-center justify-center text-white font-bold text-sm">A</div>
+            <div>
+              <p class="font-semibold text-text-primary">Partner A</p>
+              <p class="text-sm text-sage">Lose weight · Active</p>
+            </div>
+          </div>
+          <h3 class="text-lg font-bold text-text-primary mb-2">Chicken Stir-Fry Plate</h3>
+          <div class="bg-cream rounded-xl p-4 mb-4">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-3xl font-bold text-sage">~450</span>
+              <span class="text-sm text-text-secondary">calories</span>
+            </div>
+            <div class="grid grid-cols-3 gap-3">
+              <div class="text-center">
+                <p class="text-lg font-bold text-text-primary">35g</p>
+                <p class="text-xs text-text-secondary">Protein</p>
+              </div>
+              <div class="text-center">
+                <p class="text-lg font-bold text-text-primary">40g</p>
+                <p class="text-xs text-text-secondary">Carbs</p>
+              </div>
+              <div class="text-center">
+                <p class="text-lg font-bold text-text-primary">18g</p>
+                <p class="text-xs text-text-secondary">Fat</p>
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 text-sm text-text-secondary">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-sage"><polyline points="20 6 9 17 4 12"/></svg>
+            Smaller rice portion, extra vegetables, lean chicken
+          </div>
+        </div>
+
+        <div class="card border-terracotta/30">
+          <div class="flex items-center gap-3 mb-6">
+            <div class="w-10 h-10 rounded-full bg-terracotta flex items-center justify-center text-white font-bold text-sm">B</div>
+            <div>
+              <p class="font-semibold text-text-primary">Partner B</p>
+              <p class="text-sm text-terracotta">Build muscle · Very active</p>
+            </div>
+          </div>
+          <h3 class="text-lg font-bold text-text-primary mb-2">Chicken Stir-Fry Plate</h3>
+          <div class="bg-cream rounded-xl p-4 mb-4">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-3xl font-bold text-terracotta">~700</span>
+              <span class="text-sm text-text-secondary">calories</span>
+            </div>
+            <div class="grid grid-cols-3 gap-3">
+              <div class="text-center">
+                <p class="text-lg font-bold text-text-primary">55g</p>
+                <p class="text-xs text-text-secondary">Protein</p>
+              </div>
+              <div class="text-center">
+                <p class="text-lg font-bold text-text-primary">65g</p>
+                <p class="text-xs text-text-secondary">Carbs</p>
+              </div>
+              <div class="text-center">
+                <p class="text-lg font-bold text-text-primary">28g</p>
+                <p class="text-xs text-text-secondary">Fat</p>
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 text-sm text-text-secondary">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-terracotta"><polyline points="20 6 9 17 4 12"/></svg>
+            Extra chicken, full rice, added sesame oil
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section-padding bg-cream-dark">
+    <div class="container-custom">
+      <div class="text-center max-w-2xl mx-auto mb-16">
+        <h2 class="text-3xl md:text-4xl font-bold text-text-primary mb-4">How TDEE Calculation Works</h2>
+        <p class="text-lg text-text-secondary">
+          CookTwo uses the Mifflin-St Jeor equation — the gold standard in clinical nutrition — to calculate each partner's exact calorie needs.
+        </p>
+      </div>
+
+      <div class="max-w-3xl mx-auto">
+        <div class="card mb-6">
+          <div class="flex items-start gap-4">
+            <div class="w-10 h-10 rounded-full bg-sage/10 flex items-center justify-center text-sage font-bold flex-shrink-0">1</div>
+            <div>
+              <h3 class="font-bold text-text-primary text-lg mb-1">Calculate BMR</h3>
+              <p class="text-text-secondary leading-relaxed">
+                Using the Mifflin-St Jeor equation: <code class="bg-cream-dark px-2 py-0.5 rounded text-sm">(10 × weight in kg) + (6.25 × height in cm) − (5 × age) − 161 (female) or + 5 (male)</code>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mb-6">
+          <div class="flex items-start gap-4">
+            <div class="w-10 h-10 rounded-full bg-sage/10 flex items-center justify-center text-sage font-bold flex-shrink-0">2</div>
+            <div>
+              <h3 class="font-bold text-text-primary text-lg mb-1">Apply Activity Multiplier</h3>
+              <p class="text-text-secondary leading-relaxed">
+                BMR is multiplied by an activity factor ranging from 1.2 (sedentary) to 1.9 (very active), reflecting each partner's real lifestyle.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="flex items-start gap-4">
+            <div class="w-10 h-10 rounded-full bg-sage/10 flex items-center justify-center text-sage font-bold flex-shrink-0">3</div>
+            <div>
+              <h3 class="font-bold text-text-primary text-lg mb-1">Adjust for Goal</h3>
+              <p class="text-text-secondary leading-relaxed">
+                A deficit for weight loss (−300–500 cal), maintenance, or surplus for muscle gain (+300–500 cal). Macros are then split based on the target — higher protein for building, balanced for losing.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section-padding">
+    <div class="container-custom">
+      <div class="text-center max-w-2xl mx-auto mb-16">
+        <h2 class="text-3xl md:text-4xl font-bold text-text-primary mb-4">How It Works</h2>
+        <p class="text-lg text-text-secondary">Three steps. No math required from you.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+        <div class="text-center">
+          <div class="w-16 h-16 rounded-2xl bg-sage/10 flex items-center justify-center text-sage mx-auto mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <h3 class="font-bold text-text-primary text-lg mb-2">Set Body Profiles</h3>
+          <p class="text-text-secondary text-sm leading-relaxed">Each partner enters their weight, height, age, activity level, and dietary goal. Takes 60 seconds.</p>
+        </div>
+
+        <div class="text-center">
+          <div class="w-16 h-16 rounded-2xl bg-sage/10 flex items-center justify-center text-sage mx-auto mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="10" y2="10"/><line x1="14" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="10" y2="14"/><line x1="14" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="10" y2="18"/><line x1="14" y1="18" x2="16" y2="18"/></svg>
+          </div>
+          <h3 class="font-bold text-text-primary text-lg mb-2">AI Calculates Targets</h3>
+          <p class="text-text-secondary text-sm leading-relaxed">Mifflin-St Jeor runs automatically. Each recipe gets split into two personalized portion sizes with macro breakdowns.</p>
+        </div>
+
+        <div class="text-center">
+          <div class="w-16 h-16 rounded-2xl bg-sage/10 flex items-center justify-center text-sage mx-auto mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          </div>
+          <h3 class="font-bold text-text-primary text-lg mb-2">Personalized Plating</h3>
+          <p class="text-text-secondary text-sm leading-relaxed">Same recipe, two plates. Each partner sees their portion size, macros, and plating instructions at a glance.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section-padding bg-cream-dark">
+    <div class="container-custom">
+      <div class="text-center max-w-2xl mx-auto mb-12">
+        <h2 class="text-3xl md:text-4xl font-bold text-text-primary mb-4">Why It Matters</h2>
+        <p class="text-lg text-text-secondary">The problem most couples don't realize they have.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+        <div class="card">
+          <div class="w-12 h-12 rounded-xl bg-terracotta/10 flex items-center justify-center text-terracotta mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          </div>
+          <h3 class="font-bold text-text-primary mb-2">No Separate Cooking</h3>
+          <p class="text-sm text-text-secondary leading-relaxed">No more cooking two entirely different meals every night. One recipe, one cooking session, two personalized plates.</p>
+        </div>
+
+        <div class="card">
+          <div class="w-12 h-12 rounded-xl bg-terracotta/10 flex items-center justify-center text-terracotta mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          </div>
+          <h3 class="font-bold text-text-primary mb-2">No Math</h3>
+          <p class="text-sm text-text-secondary leading-relaxed">You don't calculate calories or macros. CookTwo handles all the nutrition math using clinical-grade formulas.</p>
+        </div>
+
+        <div class="card">
+          <div class="w-12 h-12 rounded-xl bg-terracotta/10 flex items-center justify-center text-terracotta mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          </div>
+          <h3 class="font-bold text-text-primary mb-2">No Arguments</h3>
+          <p class="text-sm text-text-secondary leading-relaxed">No more "you eat too much" or "that's not enough for me." Both plates are scientifically calibrated for each body.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section-padding">
+    <div class="container-custom text-center">
+      <h2 class="text-3xl md:text-4xl font-bold text-text-primary mb-4">Explore More Features</h2>
+      <p class="text-lg text-text-secondary mb-8 max-w-2xl mx-auto">
+        Adaptive cooking is just the start. See how real-time sync, AI meal planning, and smart pantry management work together.
+      </p>
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+        <a href="/features" class="btn-primary">All Features</a>
+        <a href="/features/shared-grocery-list" class="btn-secondary">Shared Grocery List</a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

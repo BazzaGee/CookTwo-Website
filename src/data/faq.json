@@ -1,0 +1,112 @@
+{
+  "faq": [
+    {
+      "category": "Product",
+      "questions": [
+        {
+          "q": "What is CookTwo?",
+          "a": "CookTwo is a collaborative adaptive nutrition app for couples. It's a shared kitchen operating system — one grocery list, one pantry, one meal plan, but personalized portions for each partner. The core idea: cook one meal together, plate it two different ways based on each person's dietary goals."
+        },
+        {
+          "q": "How does Adaptive Cooking work?",
+          "a": "When you generate a meal, the AI calculates each partner's TDEE (Total Daily Energy Expenditure) using the Mifflin-St Jeor equation based on their body profile (weight, height, age, gender, activity level) and goal (lose weight, maintain, build muscle). It then generates two separate plating instructions from the same recipe — different portions, different macros, same delicious dinner."
+        },
+        {
+          "q": "Do both partners need the same dietary goals?",
+          "a": "No — that's the whole point. Partner A can be losing weight while Partner B is building muscle, and they can even be on completely different diets (e.g. one vegan, one omnivore). CookTwo handles the math automatically. You cook one meal together, but each person gets personalized portions and macro targets."
+        },
+        {
+          "q": "Which diets are supported?",
+          "a": "Omnivore, vegetarian, vegan, pescatarian, keto, paleo and gluten-free. Each partner picks their own, and the AI generates meals that respect both — for example, chicken for an omnivore and tofu for a vegan from the same stir-fry base."
+        },
+        {
+          "q": "How does allergen safety work?",
+          "a": "Every generated meal is checked server-side against both partners' allergens before it's shown to you. If a meal contains an allergen — or a cross-reactive derivative (peanut → arachis/groundnuts; shellfish → crab, lobster, shrimp, calamari; dairy → whey, casein, ghee) — it's blocked and a safe alternative is generated. Allergies aren't a suggestion; they're a hard guardrail."
+        },
+        {
+          "q": "Is CookTwo a native app?",
+          "a": "CookTwo is a Progressive Web App (PWA). You install it directly from the browser — no App Store needed. On iOS 16.4+ and Android, it works exactly like a native app with its own icon, splash screen and full-screen experience. Share a link and your partner has it too."
+        },
+        {
+          "q": "How do I link up with my partner?",
+          "a": "One partner creates the kitchen and gets a 6-digit invite code. The other enters it. That's it — no separate accounts, no passwords. You're instantly sharing one grocery list, pantry and meal plan, each with your own profile."
+        },
+        {
+          "q": "Does it work offline?",
+          "a": "Yes. CookTwo has an offline queue that stores grocery list changes locally when you lose connection. As soon as you're back online, everything syncs automatically. Your partner sees the updates in real-time."
+        },
+        {
+          "q": "Will my partner get notified when I change things?",
+          "a": "Yes — when your partner is offline and you edit the list or pantry, CookTwo sends them a web push notification (e.g. \"2 items added to shopping list\"). Nothing happens in secret."
+        }
+      ]
+    },
+    {
+      "category": "Pricing & Limits",
+      "questions": [
+        {
+          "q": "How much does CookTwo cost?",
+          "a": "Premium is US$4.99/month or US$44.99/year (save 25%) per household — not per person. Both partners get full access. That's less than a single coffee per month for a kitchen that works for both of you."
+        },
+        {
+          "q": "Is there a free tier?",
+          "a": "Yes. The free tier includes the shared grocery list, pantry, real-time sync, partner profiles and 10 AI requests per day shared between the couple. AI meal generation, adaptive cooking and weekly planning all work on the free tier up to that daily quota."
+        },
+        {
+          "q": "What does Premium add?",
+          "a": "Premium raises the shared daily AI quota from 10 to 70 requests, adds 3 AI-generated meal photos per day, and includes priority AI generation. It's per household, so one payment covers both partners."
+        },
+        {
+          "q": "When do my AI credits reset?",
+          "a": "Quotas reset at your local midnight. Both the AI request count and the image-generation count are shared between the two partners in a household."
+        },
+        {
+          "q": "Why per household, not per person?",
+          "a": "Because CookTwo is built for couples. Per-household pricing reinforces the 'we' framing and makes the economics simple — one payment covers both partners, and there's never a question of who pays."
+        },
+        {
+          "q": "Can I cancel anytime?",
+          "a": "Yes. Premium is managed through Stripe — cancel or switch between monthly and yearly anytime from the in-app billing portal. No emails, no friction."
+        }
+      ]
+    },
+    {
+      "category": "Technology",
+      "questions": [
+        {
+          "q": "What technology is CookTwo built on?",
+          "a": "The frontend is React 19 with Vite, deployed as a PWA on Cloudflare Pages. The backend is a Cloudflare Worker (Hono framework) with D1 (SQLite) for relational data and Durable Objects for real-time WebSocket sync. AI is powered by a multi-provider chain (DeepSeek, Alibaba Qwen, ZAI) with automatic fallback."
+        },
+        {
+          "q": "How fast is the real-time sync?",
+          "a": "Under 100 milliseconds. Both partners connect via WebSocket to a Cloudflare Durable Object — a per-household server that broadcasts changes instantly. Add milk at home, your partner sees it at the store before they reach the dairy aisle."
+        },
+        {
+          "q": "Is my data secure?",
+          "a": "All data is encrypted in transit and at rest on Cloudflare's global network. Each household's real-time data is isolated in its own Durable Object. Authentication uses signed JWT tokens with 30-day expiry. There's no shared state between households."
+        },
+        {
+          "q": "Which AI generates the meals and photos?",
+          "a": "Meal text comes from DeepSeek (with Alibaba Qwen and ZAI as automatic fallbacks). AI meal photography is generated by Flux.2 (Black Forest Labs) via OpenRouter — a top-down, food-magazine style shot, or a two-plate shot when a meal is adaptively plated."
+        }
+      ]
+    },
+    {
+      "category": "Roadmap",
+      "questions": [
+        {
+          "q": "Is CookTwo actually built, or is it a concept?",
+          "a": "It's built and live. Every feature on this site — shared list, pantry AI, real-time sync, adaptive cooking, weekly planning, billing — is running today against a production Cloudflare backend. The screenshots on this site are real, captured from the live app."
+        },
+        {
+          "q": "What's coming next?",
+          "a": "The active roadmap includes expanding the diet engine beyond allergen-checking into full programmatic diet-compliance (Mediterranean, DASH, Low FODMAP, MIND and more), modelling intermittent fasting as a separate timing dimension, and a collaborative 'Meal Picker' where both partners swipe on options and the first mutual match becomes dinner."
+        },
+        {
+          "q": "Can I request a feature or diet?",
+          "a": "Yes — that's exactly what the contact form is for. Diet requests and partner-pairing feedback directly shape the roadmap."
+        }
+      ]
+    }
+  ]
+}

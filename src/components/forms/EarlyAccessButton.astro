@@ -1,0 +1,22 @@
+---
+interface Props {
+  variant?: 'primary' | 'secondary' | 'white' | 'nav';
+  label?: string;
+  class?: string;
+}
+const { variant = 'primary', label = 'Get Early Access', class: cls = '' } = Astro.props;
+
+const base =
+  'inline-flex items-center justify-center gap-2 rounded-xl font-medium transition-colors whitespace-nowrap cursor-pointer active:scale-[0.98]';
+
+const variants: Record<string, string> = {
+  primary: 'px-8 py-4 text-lg bg-sage text-white shadow-sm hover:bg-sage-dark',
+  secondary: 'px-8 py-4 text-lg border-2 border-sage text-sage hover:bg-sage/5',
+  white: 'px-8 py-4 text-lg bg-white text-sage shadow-sm hover:bg-cream-dark',
+  nav: 'px-5 py-2.5 text-base bg-sage text-white shadow-sm hover:bg-sage-dark',
+};
+---
+
+<button type="button" data-early-access class={`${base} ${variants[variant]} ${cls}`}>
+  {label}
+</button>

@@ -1,0 +1,67 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Contact | CookTwo" description="Get in touch with the CookTwo team. Questions, feedback, or partnership inquiries welcome.">
+  
+  <section class="section-padding">
+    <div class="container-custom max-w-2xl">
+      <h1 class="text-4xl md:text-5xl font-bold tracking-tight mb-4">Get in Touch</h1>
+      <p class="text-lg text-text-secondary mb-12">Questions about CookTwo? Feedback on the app? Partnership inquiries? We'd love to hear from you.</p>
+
+      <form action="https://formspree.io/f/xwpkvwqy" method="POST" class="space-y-6">
+        <div>
+          <label for="name" class="block text-sm font-medium text-text-primary mb-2">Name</label>
+          <input type="text" id="name" name="name" required class="input-field" placeholder="Your name" />
+        </div>
+
+        <div>
+          <label for="email" class="block text-sm font-medium text-text-primary mb-2">Email</label>
+          <input type="email" id="email" name="email" required class="input-field" placeholder="you@example.com" />
+        </div>
+
+        <div>
+          <label for="subject" class="block text-sm font-medium text-text-primary mb-2">Subject</label>
+          <select id="subject" name="subject" class="input-field">
+            <option value="general">General Question</option>
+            <option value="feedback">App Feedback</option>
+            <option value="bug">Bug Report</option>
+            <option value="partnership">Partnership Inquiry</option>
+            <option value="press">Press / Media</option>
+            <option value="investor">Investor Inquiry</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="message" class="block text-sm font-medium text-text-primary mb-2">Message</label>
+          <textarea id="message" name="message" rows="6" required class="input-field" placeholder="What's on your mind?"></textarea>
+        </div>
+
+        <button type="submit" class="btn-primary w-full">Send Message</button>
+      </form>
+
+      <div class="mt-16 grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div class="card">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-full bg-sage/10 flex items-center justify-center">
+              <svg class="w-5 h-5 text-sage" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+            </div>
+            <h3 class="font-semibold text-text-primary">Email</h3>
+          </div>
+          <p class="text-text-secondary">hello@cooktwo.app</p>
+        </div>
+
+        <div class="card">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-full bg-terracotta/10 flex items-center justify-center">
+              <svg class="w-5 h-5 text-terracotta" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <h3 class="font-semibold text-text-primary">Response Time</h3>
+          </div>
+          <p class="text-text-secondary">We typically respond within 24 hours.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</BaseLayout>

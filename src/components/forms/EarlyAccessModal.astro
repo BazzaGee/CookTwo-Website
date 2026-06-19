@@ -1,0 +1,168 @@
+---
+import { CONFIG } from '../../config';
+---
+
+<div
+  id="early-access-modal"
+  class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4"
+  aria-hidden="true"
+>
+  <div
+    data-eam-close
+    class="absolute inset-0 bg-text-primary/60 backdrop-blur-sm"
+  ></div>
+
+  <div
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="eam-title"
+    aria-hidden="false"
+    class="relative w-full max-w-md bg-cream rounded-3xl shadow-2xl border border-border p-8 md:p-10 animate-slide-up max-h-[90vh] overflow-y-auto"
+  >
+    <button
+      data-eam-close
+      type="button"
+      class="absolute top-4 right-4 w-9 h-9 rounded-full bg-cream-dark text-text-secondary hover:text-text-primary hover:bg-border flex items-center justify-center transition-colors"
+      aria-label="Close"
+    >
+      <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+    </button>
+
+    <div id="eam-form-wrap">
+      <div class="w-12 h-12 rounded-xl bg-sage/10 flex items-center justify-center mb-5">
+        <svg class="w-6 h-6 text-sage" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </div>
+      <h3 id="eam-title" class="text-2xl md:text-3xl font-bold text-text-primary mb-3 leading-tight">
+        Get early access to CookTwo
+      </h3>
+      <p class="text-text-secondary mb-6 leading-relaxed">
+        One shared kitchen for the two of you. A grocery list you both edit live, a pantry that makes the AI smart, and dinners generated from what you already have &mdash; plated two ways for two different goals. Drop your email and we&rsquo;ll send a link to unlock it.
+      </p>
+      <form id="eam-form" class="flex flex-col gap-3" novalidate>
+        <label for="eam-email" class="sr-only">Email address</label>
+        <input
+          type="email"
+          id="eam-email"
+          name="email"
+          placeholder="you@example.com"
+          required
+          autocomplete="email"
+          class="input-field"
+        />
+        <button
+          type="submit"
+          id="eam-submit"
+          class="btn-primary w-full justify-center"
+        >
+          <span id="eam-submit-text">Get Early Access</span>
+        </button>
+      </form>
+      <p id="eam-error" class="hidden text-error text-sm mt-3 text-center" role="alert"></p>
+      <p class="text-text-secondary/70 text-xs text-center mt-4">
+        Free during beta &middot; No credit card &middot; No spam, ever.
+      </p>
+    </div>
+
+    <div id="eam-success" class="hidden text-center animate-fade-in">
+      <div class="w-14 h-14 rounded-full bg-sage/20 flex items-center justify-center mx-auto mb-4">
+        <svg class="w-7 h-7 text-sage" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <h3 class="text-xl font-bold text-text-primary mb-2">Check your inbox!</h3>
+      <p class="text-text-secondary">
+        We&rsquo;ve sent a confirmation link to <strong id="eam-email-display" class="text-text-primary"></strong>. Click it to unlock the CookTwo app.
+      </p>
+      <button data-eam-close type="button" class="btn-secondary mt-6">Done</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  import { CONFIG } from '../../config';
+
+  const modal = document.getElementById('early-access-modal');
+
+  if (modal) {
+    const form = document.getElementById('eam-form') as HTMLFormElement | null;
+    const formWrap = document.getElementById('eam-form-wrap');
+    const emailInput = document.getElementById('eam-email') as HTMLInputElement | null;
+    const submitBtn = document.getElementById('eam-submit') as HTMLButtonElement | null;
+    const submitText = document.getElementById('eam-submit-text');
+    const errorEl = document.getElementById('eam-error');
+    const successEl = document.getElementById('eam-success');
+    const emailDisplay = document.getElementById('eam-email-display');
+
+    const open = () => {
+      errorEl?.classList.add('hidden');
+      successEl?.classList.add('hidden');
+      formWrap?.classList.remove('hidden');
+      if (emailInput) emailInput.value = '';
+      if (submitBtn) submitBtn.disabled = false;
+      if (submitText) submitText.textContent = 'Get Early Access';
+      modal.classList.remove('hidden');
+      modal.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+      window.setTimeout(() => emailInput?.focus(), 60);
+    };
+
+    const close = () => {
+      modal.classList.add('hidden');
+      modal.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    };
+
+    document.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      if (target.closest('[data-eam-close]')) {
+        close();
+        return;
+      }
+      if (target.closest('[data-early-access]')) {
+        e.preventDefault();
+        open();
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+        close();
+      }
+    });
+
+    form?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorEl?.classList.add('hidden');
+
+      const email = emailInput?.value.trim() || '';
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        if (errorEl) errorEl.textContent = 'Please enter a valid email address.';
+        errorEl?.classList.remove('hidden');
+        return;
+      }
+
+      if (submitBtn) submitBtn.disabled = true;
+      if (submitText) submitText.textContent = 'Sending...';
+
+      try {
+        const res = await fetch(`${CONFIG.API_URL}/api/waitlist/subscribe`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || 'Something went wrong.');
+        }
+        formWrap?.classList.add('hidden');
+        if (emailDisplay) emailDisplay.textContent = email;
+        successEl?.classList.remove('hidden');
+      } catch (err) {
+        if (errorEl) {
+          errorEl.textContent = err instanceof Error ? err.message : 'Something went wrong.';
+        }
+        errorEl?.classList.remove('hidden');
+        if (submitBtn) submitBtn.disabled = false;
+        if (submitText) submitText.textContent = 'Get Early Access';
+      }
+    });
+  }
+</script>

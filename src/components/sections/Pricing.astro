@@ -1,0 +1,77 @@
+---
+import EarlyAccessButton from '../forms/EarlyAccessButton.astro';
+---
+
+<section class="section-padding bg-cream" id="pricing">
+  <div class="container-custom">
+    <div class="text-center mb-16">
+      <h2 class="text-3xl md:text-5xl font-bold text-text-primary mb-4">Simple Pricing. One Kitchen.</h2>
+      <p class="text-xl text-text-secondary max-w-2xl mx-auto">One price for both partners. No per-seat charges. No surprises. Quotas are shared between the two of you.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+      <div class="bg-white rounded-2xl border border-border p-8 md:p-10 shadow-sm">
+        <h3 class="text-2xl font-bold text-text-primary mb-2">Free</h3>
+        <div class="flex items-baseline gap-1 mb-6">
+          <span class="text-5xl font-bold text-text-primary">$0</span>
+          <span class="text-text-secondary text-lg">/month</span>
+        </div>
+        <p class="text-text-secondary mb-8">Everything you need to run a shared kitchen — including AI.</p>
+        <ul class="space-y-4 mb-10">
+          <li class="flex items-start gap-3">
+            <svg class="w-5 h-5 mt-0.5 text-sage flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <span class="text-text-primary">Shared grocery list &amp; pantry</span>
+          </li>
+          <li class="flex items-start gap-3">
+            <svg class="w-5 h-5 mt-0.5 text-sage flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <span class="text-text-primary">Real-time sync (sub-100ms)</span>
+          </li>
+          <li class="flex items-start gap-3">
+            <svg class="w-5 h-5 mt-0.5 text-sage flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <span class="text-text-primary"><strong>10 AI requests / day</strong> — shared between you both</span>
+          </li>
+          <li class="flex items-start gap-3">
+            <svg class="w-5 h-5 mt-0.5 text-sage flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <span class="text-text-primary">Adaptive cooking &amp; partner profiles</span>
+          </li>
+        </ul>
+        <EarlyAccessButton variant="secondary" class="w-full" label="Get Started Free" />
+      </div>
+
+      <div class="bg-white rounded-2xl border-2 border-sage p-8 md:p-10 shadow-md relative">
+        <span class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-terracotta text-white text-xs font-bold px-4 py-1.5 rounded-full tracking-wide uppercase">Most Popular</span>
+        <h3 class="text-2xl font-bold text-text-primary mb-2">Premium</h3>
+        <div class="flex items-baseline gap-1 mb-1">
+          <span class="text-5xl font-bold text-sage">$4.99</span>
+          <span class="text-text-secondary text-lg">/month</span>
+        </div>
+        <p class="text-sm text-text-secondary mb-1">per household · or <strong class="text-text-primary">$44.99/year (save 25%)</strong></p>
+        <p class="text-text-secondary mb-8 mt-3">For couples who cook together every day. Higher quotas, AI photography, priority generation.</p>
+        <ul class="space-y-4 mb-10">
+          <li class="flex items-start gap-3">
+            <svg class="w-5 h-5 mt-0.5 text-sage flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <span class="text-text-primary"><strong>70 AI requests / day</strong> — shared</span>
+          </li>
+          <li class="flex items-start gap-3">
+            <svg class="w-5 h-5 mt-0.5 text-sage flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <span class="text-text-primary"><strong>3 AI meal photos / day</strong></span>
+          </li>
+          <li class="flex items-start gap-3">
+            <svg class="w-5 h-5 mt-0.5 text-sage flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <span class="text-text-primary">Weekly meal plans &amp; saved recipe library</span>
+          </li>
+          <li class="flex items-start gap-3">
+            <svg class="w-5 h-5 mt-0.5 text-sage flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <span class="text-text-primary">Priority AI responses</span>
+          </li>
+          <li class="flex items-start gap-3">
+            <svg class="w-5 h-5 mt-0.5 text-sage flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <span class="text-text-primary">Cancel anytime (via Stripe)</span>
+          </li>
+        </ul>
+        <EarlyAccessButton variant="primary" class="w-full" />
+      </div>
+    </div>
+    <p class="text-center text-sm text-text-secondary mt-8">Premium is billed per household, not per person. Both partners get full access from one payment.</p>
+  </div>
+</section>

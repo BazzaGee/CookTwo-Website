@@ -1,0 +1,139 @@
+{
+  "comparison": {
+    "categories": [
+      { "id": "adaptive", "label": "Adaptive Cooking (one meal, two plates)" },
+      { "id": "realtime", "label": "Real-Time Partner Sync (<100ms)" },
+      { "id": "pantry", "label": "Pantry-First AI (natural language)" },
+      { "id": "grocery", "label": "Shared Grocery List" },
+      { "id": "mealgen", "label": "AI Meal Generation" },
+      { "id": "weekly", "label": "Weekly Meal Planning" },
+      { "id": "recipes", "label": "Recipe Library & Saving" },
+      { "id": "couples", "label": "Built Exclusively for Couples" },
+      { "id": "offline", "label": "Offline Support" },
+      { "id": "pwa", "label": "PWA (Install Without App Store)" },
+      { "id": "pricing", "label": "Price Per Month" }
+    ],
+    "competitors": [
+      {
+        "name": "CookTwo",
+        "tag": "This App",
+        "highlight": true,
+        "values": {
+          "adaptive": "full",
+          "realtime": "full",
+          "pantry": "full",
+          "grocery": "full",
+          "mealgen": "full",
+          "weekly": "full",
+          "recipes": "full",
+          "couples": "full",
+          "offline": "full",
+          "pwa": "full",
+          "pricing": "$4.99"
+        }
+      },
+      {
+        "name": "Healthspan",
+        "tag": "Rising Threat",
+        "values": {
+          "adaptive": "partial",
+          "realtime": "none",
+          "pantry": "none",
+          "grocery": "none",
+          "mealgen": "full",
+          "weekly": "none",
+          "recipes": "none",
+          "couples": "partial",
+          "offline": "none",
+          "pwa": "none",
+          "pricing": "Free beta"
+        }
+      },
+      {
+        "name": "Yummo",
+        "tag": "$9.99/mo",
+        "values": {
+          "adaptive": "partial",
+          "realtime": "none",
+          "pantry": "none",
+          "grocery": "none",
+          "mealgen": "full",
+          "weekly": "none",
+          "recipes": "none",
+          "couples": "none",
+          "offline": "none",
+          "pwa": "none",
+          "pricing": "$9.99"
+        }
+      },
+      {
+        "name": "PlateMates",
+        "tag": "$5.99/mo",
+        "values": {
+          "adaptive": "partial",
+          "realtime": "none",
+          "pantry": "partial",
+          "grocery": "none",
+          "mealgen": "full",
+          "weekly": "none",
+          "recipes": "full",
+          "couples": "none",
+          "offline": "none",
+          "pwa": "none",
+          "pricing": "$5.99"
+        }
+      },
+      {
+        "name": "Fitia",
+        "tag": "10M+ users",
+        "values": {
+          "adaptive": "none",
+          "realtime": "none",
+          "pantry": "none",
+          "grocery": "none",
+          "mealgen": "full",
+          "weekly": "full",
+          "recipes": "full",
+          "couples": "none",
+          "offline": "none",
+          "pwa": "none",
+          "pricing": "Free"
+        }
+      },
+      {
+        "name": "Clove",
+        "tag": "$4.15M funded",
+        "values": {
+          "adaptive": "none",
+          "realtime": "none",
+          "pantry": "partial",
+          "grocery": "full",
+          "mealgen": "full",
+          "weekly": "none",
+          "recipes": "full",
+          "couples": "none",
+          "offline": "none",
+          "pwa": "none",
+          "pricing": "Free"
+        }
+      },
+      {
+        "name": "AnyList",
+        "tag": "Grocery only",
+        "values": {
+          "adaptive": "none",
+          "realtime": "full",
+          "pantry": "none",
+          "grocery": "full",
+          "mealgen": "none",
+          "weekly": "none",
+          "recipes": "none",
+          "couples": "none",
+          "offline": "none",
+          "pwa": "none",
+          "pricing": "$9.99"
+        }
+      }
+    ]
+  }
+}

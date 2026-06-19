@@ -1,0 +1,6 @@
+User-agent: *
+Disallow: /
+
+Disallow: /PWA/
+
+Sitemap: https://cooktwo.app/sitemap-index.xml

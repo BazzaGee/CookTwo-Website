@@ -1,0 +1,499 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import featuresData from '../data/features.json';
+import Pricing from '../components/sections/Pricing.astro';
+import EarlyAccessButton from '../components/forms/EarlyAccessButton.astro';
+import PhoneFrame from '../components/app-mocks/PhoneFrame.astro';
+import Adaptive from '../components/app-mocks/Adaptive.astro';
+
+const { features, steps } = featuresData;
+
+const beforeItems = [
+  "What should we make tonight? I don't know, what do you want?",
+  "Buying the same thing twice because nobody wrote it down",
+  "Eating the same 5 meals on rotation because planning is exhausting",
+  "One partner trying to lose weight, the other trying to bulk — cooking separately",
+  "Good ingredients going bad because you forgot they were in the fridge"
+];
+
+const afterItems = [
+  "AI suggests dinner based on what's in your pantry and both partners' goals",
+  "One shared list. Real-time sync. Zero duplicates.",
+  "AI generates personalized weekly plans from your pantry and preferences",
+  "One recipe, two personalized plates — different portions, same meal",
+  "Pantry-aware suggestions use what you have before it expires"
+];
+---
+
+<BaseLayout
+  title="CookTwo | One Dinner. Two Plates. Zero Arguments."
+  description="CookTwo is the collaborative adaptive nutrition app for couples. AI-powered meal planning, shared grocery lists, and personalized portions — one meal, two plates."
+>
+
+  <!-- Hero -->
+  <section class="section-padding bg-cream relative overflow-hidden">
+    <div class="absolute inset-0 opacity-30">
+      <div class="absolute top-20 left-10 w-72 h-72 bg-sage/20 rounded-full blur-3xl"></div>
+      <div class="absolute bottom-10 right-10 w-96 h-96 bg-terracotta/15 rounded-full blur-3xl"></div>
+    </div>
+    <div class="container-custom relative z-10 text-center">
+      <div class="inline-flex items-center gap-2 bg-sage/10 text-sage px-4 py-2 rounded-full text-sm font-medium mb-8">
+        <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+        Now Live — Built App, Not Just a Landing Page
+      </div>
+      <h1 class="text-4xl md:text-6xl lg:text-7xl font-bold text-text-primary max-w-4xl mx-auto leading-tight mb-6">
+        One dinner.<br/>
+        <span class="text-sage">Two plates.</span><br/>
+        <span class="text-terracotta">Zero arguments.</span>
+      </h1>
+      <p class="text-xl md:text-2xl text-text-secondary max-w-2xl mx-auto mb-10 leading-relaxed">
+        CookTwo is the collaborative adaptive nutrition app that lets couples with different goals cook one meal together — with personalized portions for each partner.
+      </p>
+      <div class="flex flex-col sm:flex-row gap-4 justify-center">
+        <EarlyAccessButton variant="primary" />
+        <a href="#how-it-works" class="btn-secondary inline-flex items-center justify-center gap-2">
+          <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+          See How It Works
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Overview -->
+  <section class="section-padding bg-cream-dark" id="features">
+    <div class="container-custom">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl md:text-5xl font-bold text-text-primary mb-4">Everything Your Kitchen Needs</h2>
+        <p class="text-xl text-text-secondary max-w-2xl mx-auto">Five core features, all built and live. No vaporware.</p>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {features.map((feature) => (
+          <a href={feature.href} class="card group">
+            <div class="flex items-start justify-between mb-4">
+              <div class="w-12 h-12 rounded-xl bg-sage/10 flex items-center justify-center">
+                {feature.icon === 'chef-hat' && (
+                  <svg class="w-6 h-6 text-sage" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"/><line x1="6" x2="18" y1="17" y2="17"/></svg>
+                )}
+                {feature.icon === 'shopping-basket' && (
+                  <svg class="w-6 h-6 text-sage" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 11 4-7"/><path d="m19 11-4-7"/><path d="M2 11h20"/><path d="m3.5 11 1.7 7.7a2 2 0 0 0 2 1.3h9.6a2 2 0 0 0 2-1.3L20.5 11"/></svg>
+                )}
+                {feature.icon === 'boxes' && (
+                  <svg class="w-6 h-6 text-sage" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+                )}
+                {feature.icon === 'calendar' && (
+                  <svg class="w-6 h-6 text-sage" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg>
+                )}
+                {feature.icon === 'wifi' && (
+                  <svg class="w-6 h-6 text-sage" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h.01"/><path d="M8.5 16.5a5 5 0 0 1 7 0"/><path d="M5 13a10 10 0 0 1 14 0"/><path d="M1.5 9.5a15 15 0 0 1 21 0"/></svg>
+                )}
+              </div>
+              <span class={feature.badge === 'Signature Feature' ? 'badge-signature' : 'badge-live'}>{feature.badge}</span>
+            </div>
+            <h3 class="text-xl font-bold text-text-primary mb-3 group-hover:text-sage transition-colors">{feature.title}</h3>
+            <p class="text-text-secondary leading-relaxed mb-4">{feature.description}</p>
+            <span class="text-sage font-medium text-sm inline-flex items-center gap-1 group-hover:gap-2 transition-all">
+              Learn more
+              <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+            </span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Adaptive Cooking Demo -->
+  <section class="section-padding bg-cream">
+    <div class="container-custom">
+      <div class="text-center mb-16">
+        <span class="badge-signature mb-4 inline-block">Signature Feature</span>
+        <h2 class="text-3xl md:text-5xl font-bold text-text-primary mb-4">One Recipe. Two Plates.</h2>
+        <p class="text-xl text-text-secondary max-w-2xl mx-auto">Same Chicken Stir-Fry, personalized for each partner's goals.</p>
+      </div>
+      <div class="max-w-4xl mx-auto">
+        <div class="text-center mb-10">
+          <div class="inline-flex items-center gap-3 bg-white rounded-2xl border border-border px-8 py-5 shadow-sm">
+            <svg class="w-8 h-8 text-terracotta" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 0 1 10 10c0 5.52-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2"/><path d="M12 6v6l4 2"/></svg>
+            <div class="text-left">
+              <p class="text-sm text-text-secondary">Tonight's Dinner</p>
+              <p class="text-xl font-bold text-text-primary">Chicken Stir-Fry</p>
+            </div>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <!-- Partner A -->
+          <div class="bg-white rounded-2xl border-2 border-sage p-8 shadow-sm">
+            <div class="flex items-center gap-3 mb-6">
+              <div class="w-10 h-10 rounded-full bg-sage/20 flex items-center justify-center">
+                <span class="text-sage font-bold text-sm">A</span>
+              </div>
+              <div>
+                <p class="font-bold text-text-primary">Partner A</p>
+                <p class="text-sm text-text-secondary">Weight Loss Goal</p>
+              </div>
+            </div>
+            <div class="bg-cream rounded-xl p-4 mb-6">
+              <p class="text-3xl font-bold text-sage mb-1">~450 cal</p>
+              <p class="text-sm text-text-secondary">Personalized portion</p>
+            </div>
+            <div class="space-y-3">
+              <div class="flex justify-between items-center">
+                <span class="text-sm text-text-secondary">Protein</span>
+                <div class="flex items-center gap-3">
+                  <div class="w-32 h-2 bg-cream-dark rounded-full overflow-hidden">
+                    <div class="h-full bg-sage rounded-full" style="width: 70%"></div>
+                  </div>
+                  <span class="text-sm font-medium text-text-primary w-14 text-right">35g</span>
+                </div>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-sm text-text-secondary">Carbs</span>
+                <div class="flex items-center gap-3">
+                  <div class="w-32 h-2 bg-cream-dark rounded-full overflow-hidden">
+                    <div class="h-full bg-sage/70 rounded-full" style="width: 45%"></div>
+                  </div>
+                  <span class="text-sm font-medium text-text-primary w-14 text-right">30g</span>
+                </div>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-sm text-text-secondary">Fat</span>
+                <div class="flex items-center gap-3">
+                  <div class="w-32 h-2 bg-cream-dark rounded-full overflow-hidden">
+                    <div class="h-full bg-sage/50 rounded-full" style="width: 30%"></div>
+                  </div>
+                  <span class="text-sm font-medium text-text-primary w-14 text-right">18g</span>
+                </div>
+              </div>
+            </div>
+            <div class="mt-6 pt-4 border-t border-border">
+              <p class="text-xs text-text-secondary italic">TDEE-based using Mifflin-St Jeor equation with 20% deficit</p>
+            </div>
+          </div>
+
+          <!-- Partner B -->
+          <div class="bg-white rounded-2xl border-2 border-terracotta p-8 shadow-sm">
+            <div class="flex items-center gap-3 mb-6">
+              <div class="w-10 h-10 rounded-full bg-terracotta/20 flex items-center justify-center">
+                <span class="text-terracotta font-bold text-sm">B</span>
+              </div>
+              <div>
+                <p class="font-bold text-text-primary">Partner B</p>
+                <p class="text-sm text-text-secondary">Muscle Gain Goal</p>
+              </div>
+            </div>
+            <div class="bg-cream rounded-xl p-4 mb-6">
+              <p class="text-3xl font-bold text-terracotta mb-1">~700 cal</p>
+              <p class="text-sm text-text-secondary">Personalized portion</p>
+            </div>
+            <div class="space-y-3">
+              <div class="flex justify-between items-center">
+                <span class="text-sm text-text-secondary">Protein</span>
+                <div class="flex items-center gap-3">
+                  <div class="w-32 h-2 bg-cream-dark rounded-full overflow-hidden">
+                    <div class="h-full bg-terracotta rounded-full" style="width: 90%"></div>
+                  </div>
+                  <span class="text-sm font-medium text-text-primary w-14 text-right">55g</span>
+                </div>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-sm text-text-secondary">Carbs</span>
+                <div class="flex items-center gap-3">
+                  <div class="w-32 h-2 bg-cream-dark rounded-full overflow-hidden">
+                    <div class="h-full bg-terracotta/70 rounded-full" style="width: 75%"></div>
+                  </div>
+                  <span class="text-sm font-medium text-text-primary w-14 text-right">65g</span>
+                </div>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-sm text-text-secondary">Fat</span>
+                <div class="flex items-center gap-3">
+                  <div class="w-32 h-2 bg-cream-dark rounded-full overflow-hidden">
+                    <div class="h-full bg-terracotta/50 rounded-full" style="width: 50%"></div>
+                  </div>
+                  <span class="text-sm font-medium text-text-primary w-14 text-right">28g</span>
+                </div>
+              </div>
+            </div>
+            <div class="mt-6 pt-4 border-t border-border">
+              <p class="text-xs text-text-secondary italic">TDEE-based using Mifflin-St Jeor equation with 15% surplus</p>
+            </div>
+          </div>
+        </div>
+        <p class="text-center text-text-secondary mt-8 text-sm">Same pan. Same recipe. Different portions — calculated automatically from each partner's body profile and goals.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Real App Screenshots -->
+  <section class="section-padding bg-cream">
+    <div class="container-custom">
+      <div class="text-center mb-16">
+        <span class="badge-live mb-4 inline-block">Not a mockup. This is the live app.</span>
+        <h2 class="text-3xl md:text-5xl font-bold text-text-primary mb-4">See it with your own eyes</h2>
+        <p class="text-xl text-text-secondary max-w-2xl mx-auto">Every screen below is a real screenshot of CookTwo running today — two real partners (Alex &amp; Jordan), a real shared pantry, and a real AI-generated meal plated two ways.</p>
+      </div>
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 items-start">
+        <div class="text-center">
+          <PhoneFrame src="/images/app/01-shopping.webp" alt="CookTwo shared shopping list with partner colours and categories" />
+          <p class="text-sm font-semibold text-text-primary mt-4">Shared Shopping List</p>
+          <p class="text-xs text-text-secondary">Partner colours · auto-categories · live sync</p>
+        </div>
+        <div class="text-center">
+          <PhoneFrame src="/images/app/02-pantry.webp" alt="CookTwo pantry with natural language input and AI sorting" />
+          <p class="text-sm font-semibold text-text-primary mt-4">Pantry-First AI</p>
+          <p class="text-xs text-text-secondary">Type naturally · AI sorts it out</p>
+        </div>
+        <div class="text-center">
+          <PhoneFrame src="/images/app/03-adaptive-meal.webp" alt="CookTwo adaptive meal showing Alex's plate and Jordan's plate" />
+          <p class="text-sm font-semibold text-text-primary mt-4">Adaptive Plating</p>
+          <p class="text-xs text-text-secondary">One meal · two plates · both goals</p>
+        </div>
+        <div class="text-center">
+          <PhoneFrame src="/images/app/04-profiles-full.webp" alt="CookTwo partner profiles with TDEE and pricing" />
+          <p class="text-sm font-semibold text-text-primary mt-4">Dual Profiles</p>
+          <p class="text-xs text-text-secondary">TDEE per partner · goals · pricing</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Before / After -->
+  <section class="section-padding bg-cream-dark">
+    <div class="container-custom">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl md:text-5xl font-bold text-text-primary mb-4">Sound Familiar?</h2>
+        <p class="text-xl text-text-secondary max-w-2xl mx-auto">Every couple knows these struggles. CookTwo solves them.</p>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+        <!-- Before -->
+        <div>
+          <div class="flex items-center gap-2 mb-8">
+            <div class="w-8 h-8 rounded-full bg-error/15 flex items-center justify-center">
+              <svg class="w-4 h-4 text-error" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            </div>
+            <h3 class="text-2xl font-bold text-text-primary">Before CookTwo</h3>
+          </div>
+          <div class="space-y-5">
+            {beforeItems.map((item) => (
+              <div class="flex items-start gap-4 bg-white rounded-xl border border-border p-5">
+                <div class="w-6 h-6 rounded-full bg-error/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <svg class="w-3.5 h-3.5 text-error" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                </div>
+                <p class="text-text-secondary leading-relaxed">{item}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <!-- After -->
+        <div>
+          <div class="flex items-center gap-2 mb-8">
+            <div class="w-8 h-8 rounded-full bg-sage/15 flex items-center justify-center">
+              <svg class="w-4 h-4 text-sage" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <h3 class="text-2xl font-bold text-text-primary">After CookTwo</h3>
+          </div>
+          <div class="space-y-5">
+            {afterItems.map((item) => (
+              <div class="flex items-start gap-4 bg-white rounded-xl border border-border p-5">
+                <div class="w-6 h-6 rounded-full bg-sage/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <svg class="w-3.5 h-3.5 text-sage" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <p class="text-text-secondary leading-relaxed">{item}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works Preview -->
+  <section class="section-padding bg-cream" id="how-it-works">
+    <div class="container-custom">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl md:text-5xl font-bold text-text-primary mb-4">How It Works</h2>
+        <p class="text-xl text-text-secondary max-w-2xl mx-auto">Five steps from setup to your first adaptive dinner.</p>
+      </div>
+      <div class="max-w-4xl mx-auto space-y-0">
+        {steps.map((step, index) => (
+          <div class="flex items-start gap-6 md:gap-8">
+            <div class="flex flex-col items-center">
+              <div class="w-12 h-12 rounded-full bg-sage text-white flex items-center justify-center font-bold text-lg flex-shrink-0 shadow-sm">
+                {step.number}
+              </div>
+              {index < steps.length - 1 && (
+                <div class="w-0.5 h-16 md:h-20 bg-sage/20"></div>
+              )}
+            </div>
+            <div class="pb-12 md:pb-16">
+              <h3 class="text-xl font-bold text-text-primary mb-2">{step.title}</h3>
+              <p class="text-text-secondary leading-relaxed max-w-lg">{step.description}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Product Loop -->
+  <section class="section-padding bg-cream-dark">
+    <div class="container-custom">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl md:text-5xl font-bold text-text-primary mb-4">The Self-Reinforcing Loop</h2>
+        <p class="text-xl text-text-secondary max-w-2xl mx-auto">Every action feeds the next. Your kitchen gets smarter every week.</p>
+      </div>
+      <div class="max-w-3xl mx-auto">
+        <!-- Circular flow diagram -->
+        <div class="relative">
+          <!-- Center hub -->
+          <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div class="w-24 h-24 rounded-full bg-sage/10 border-2 border-sage/20 flex items-center justify-center">
+              <svg class="w-10 h-10 text-sage" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+            </div>
+          </div>
+
+          <!-- Grid of 3 nodes -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <!-- Pantry -->
+            <div class="bg-white rounded-2xl border border-border p-6 text-center shadow-sm">
+              <div class="w-14 h-14 rounded-xl bg-sage/10 flex items-center justify-center mx-auto mb-4">
+                <svg class="w-7 h-7 text-sage" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+              </div>
+              <h3 class="font-bold text-text-primary text-lg mb-1">Pantry</h3>
+              <p class="text-sm text-text-secondary">What you have right now</p>
+            </div>
+
+            <!-- AI Meals (center top on mobile) -->
+            <div class="bg-white rounded-2xl border-2 border-sage p-6 text-center shadow-sm relative">
+              <span class="absolute -top-2.5 left-1/2 -translate-x-1/2 badge-signature text-[10px]">AI</span>
+              <div class="w-14 h-14 rounded-xl bg-terracotta/10 flex items-center justify-center mx-auto mb-4">
+                <svg class="w-7 h-7 text-terracotta" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"/><line x1="6" x2="18" y1="17" y2="17"/></svg>
+              </div>
+              <h3 class="font-bold text-text-primary text-lg mb-1">AI Meals</h3>
+              <p class="text-sm text-text-secondary">Personalized recipes</p>
+            </div>
+
+            <!-- Shopping -->
+            <div class="bg-white rounded-2xl border border-border p-6 text-center shadow-sm">
+              <div class="w-14 h-14 rounded-xl bg-sage/10 flex items-center justify-center mx-auto mb-4">
+                <svg class="w-7 h-7 text-sage" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+              </div>
+              <h3 class="font-bold text-text-primary text-lg mb-1">Shopping</h3>
+              <p class="text-sm text-text-secondary">Shared grocery list</p>
+            </div>
+          </div>
+
+          <!-- Flow arrows -->
+          <div class="flex items-center justify-center gap-4 text-text-secondary text-sm font-medium">
+            <span class="flex items-center gap-1">
+              <span class="text-sage">Pantry</span>
+              <svg class="w-5 h-5 text-sage" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+              <span class="text-terracotta">AI Meals</span>
+            </span>
+            <svg class="w-5 h-5 text-sage" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+            <span class="flex items-center gap-1">
+              <span class="text-terracotta">AI Meals</span>
+              <svg class="w-5 h-5 text-terracotta" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+              <span class="text-sage">Shopping</span>
+            </span>
+            <svg class="w-5 h-5 text-terracotta" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+            <span class="flex items-center gap-1">
+              <span class="text-sage">Shopping</span>
+              <svg class="w-5 h-5 text-sage" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+              <span class="text-sage">Pantry</span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tech Stack -->
+  <section class="section-padding bg-cream">
+    <div class="container-custom">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl md:text-5xl font-bold text-text-primary mb-4">Built for Real-Time Collaboration</h2>
+        <p class="text-xl text-text-secondary max-w-2xl mx-auto">Modern edge infrastructure. Not a weekend hack — production-grade architecture.</p>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+        <!-- React 19 -->
+        <div class="bg-white rounded-2xl border border-border p-6 shadow-sm">
+          <div class="w-10 h-10 rounded-lg bg-sage/10 flex items-center justify-center mb-4">
+            <svg class="w-5 h-5 text-sage" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          </div>
+          <h3 class="font-bold text-text-primary text-lg mb-1">React 19</h3>
+          <p class="text-sm text-text-secondary">Latest React with concurrent features for a responsive, app-like PWA experience.</p>
+        </div>
+
+        <!-- Cloudflare Workers -->
+        <div class="bg-white rounded-2xl border border-border p-6 shadow-sm">
+          <div class="w-10 h-10 rounded-lg bg-sage/10 flex items-center justify-center mb-4">
+            <svg class="w-5 h-5 text-sage" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          </div>
+          <h3 class="font-bold text-text-primary text-lg mb-1">Cloudflare Workers</h3>
+          <p class="text-sm text-text-secondary">Edge-deployed serverless functions with sub-millisecond cold starts. Runs in 300+ cities worldwide.</p>
+        </div>
+
+        <!-- D1 Database -->
+        <div class="bg-white rounded-2xl border border-border p-6 shadow-sm">
+          <div class="w-10 h-10 rounded-lg bg-sage/10 flex items-center justify-center mb-4">
+            <svg class="w-5 h-5 text-sage" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></svg>
+          </div>
+          <h3 class="font-bold text-text-primary text-lg mb-1">D1 Database</h3>
+          <p class="text-sm text-text-secondary">SQLite at the edge. Fast reads for pantry items, grocery lists, and meal plans with zero latency.</p>
+        </div>
+
+        <!-- Durable Objects -->
+        <div class="bg-white rounded-2xl border border-border p-6 shadow-sm">
+          <div class="w-10 h-10 rounded-lg bg-terracotta/10 flex items-center justify-center mb-4">
+            <svg class="w-5 h-5 text-terracotta" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6m8.66-15-5.2 3m-6.92 4-5.2 3M22.66 19l-5.2-3M10.46 12l-5.2-3"/></svg>
+          </div>
+          <h3 class="font-bold text-text-primary text-lg mb-1">Durable Objects</h3>
+          <p class="text-sm text-text-secondary">Per-household WebSocket hubs. Sub-100ms real-time sync between both partners. Offline queue with auto-reconnect.</p>
+        </div>
+
+        <!-- Multi-Provider AI -->
+        <div class="bg-white rounded-2xl border border-border p-6 shadow-sm">
+          <div class="w-10 h-10 rounded-lg bg-terracotta/10 flex items-center justify-center mb-4">
+            <svg class="w-5 h-5 text-terracotta" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 0 1 10 10c0 5.52-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2"/><path d="M12 6v6l4 2"/></svg>
+          </div>
+          <h3 class="font-bold text-text-primary text-lg mb-1">Multi-Provider AI Chain</h3>
+          <p class="text-sm text-text-secondary">DeepSeek, Alibaba, and ZAI with automatic fallback. Always-on AI meal generation and pantry intelligence.</p>
+        </div>
+
+        <!-- PWA -->
+        <div class="bg-white rounded-2xl border border-border p-6 shadow-sm">
+          <div class="w-10 h-10 rounded-lg bg-sage/10 flex items-center justify-center mb-4">
+            <svg class="w-5 h-5 text-sage" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
+          </div>
+          <h3 class="font-bold text-text-primary text-lg mb-1">PWA Installable</h3>
+          <p class="text-sm text-text-secondary">Install on any device. Works offline. Home screen icon, push notifications, native-like experience.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing -->
+  <Pricing />
+
+  <!-- Final CTA -->
+  <section id="get-early-access" class="section-padding bg-sage relative overflow-hidden">
+    <div class="absolute inset-0 opacity-10">
+      <div class="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+      <div class="absolute bottom-0 left-0 w-72 h-72 bg-terracotta rounded-full blur-3xl translate-y-1/2 -translate-x-1/2"></div>
+    </div>
+    <div class="container-custom relative z-10 text-center">
+      <h2 class="text-3xl md:text-5xl font-bold text-white mb-6 leading-tight">
+        The "What's for dinner?"<br/>argument ends tonight.
+      </h2>
+      <p class="text-xl text-white/80 max-w-xl mx-auto mb-10">
+        One dinner. Two plates. Zero arguments. Get the link to unlock CookTwo.
+      </p>
+      <div class="flex justify-center">
+        <EarlyAccessButton variant="white" />
+      </div>
+      <p class="text-white/60 mt-6 text-sm">Free during beta. No credit card required.</p>
+    </div>
+  </section>
+
+</BaseLayout>

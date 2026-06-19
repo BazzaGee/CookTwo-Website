@@ -1,0 +1,83 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-cream text-text-primary antialiased leading-relaxed;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply tracking-tight;
+  }
+}
+
+@layer components {
+  .container-custom {
+    @apply max-w-6xl mx-auto px-6;
+  }
+
+  .section-padding {
+    @apply py-20 md:py-32;
+  }
+
+  .card {
+    @apply bg-white p-8 rounded-2xl border border-border hover:border-sage transition-all shadow-sm hover:shadow-md;
+  }
+
+  .btn-primary {
+    @apply bg-sage text-white px-8 py-4 rounded-xl text-lg font-medium transition-colors shadow-sm hover:bg-sage-dark active:scale-[0.98];
+  }
+
+  .btn-secondary {
+    @apply border-2 border-sage text-sage px-8 py-4 rounded-xl text-lg font-medium transition-colors hover:bg-sage/5;
+  }
+
+  .input-field {
+    @apply w-full px-4 py-4 rounded-xl border border-border bg-white text-text-primary focus:outline-none focus:ring-2 focus:ring-sage/50 focus:border-sage transition-all;
+  }
+
+  .badge-signature {
+    @apply bg-terracotta text-white text-xs px-3 py-1 rounded-full font-medium;
+  }
+
+  .badge-live {
+    @apply bg-sage text-white text-xs px-3 py-1 rounded-full font-medium;
+  }
+
+  .stat-card {
+    @apply bg-white rounded-2xl border border-border p-6 text-center shadow-sm;
+  }
+
+  .stat-number {
+    @apply text-4xl md:text-5xl font-bold text-sage tracking-tight;
+  }
+
+  .stat-label {
+    @apply text-sm text-text-secondary mt-2 font-medium;
+  }
+
+  .comparison-table {
+    @apply w-full border-collapse;
+  }
+
+  .comparison-table th {
+    @apply bg-sage/10 text-text-primary font-semibold px-4 py-3 text-left text-sm;
+  }
+
+  .comparison-table td {
+    @apply px-4 py-3 border-t border-border text-sm;
+  }
+
+  .comparison-table tr:hover td {
+    @apply bg-sage/5;
+  }
+
+  .timeline-dot {
+    @apply w-4 h-4 rounded-full bg-sage mt-1 flex-shrink-0 ring-4 ring-sage/20;
+  }
+}

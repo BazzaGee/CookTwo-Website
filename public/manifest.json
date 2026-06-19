@@ -1,0 +1,23 @@
+{
+  "name": "CookTwo",
+  "short_name": "CookTwo",
+  "description": "One dinner. Two plates. Zero arguments. The collaborative adaptive nutrition app for couples.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FAF6EE",
+  "theme_color": "#7A9E7E",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/logo/logo-icon.png",
+      "sizes": "192x192 256x256 512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

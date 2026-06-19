@@ -1,0 +1,115 @@
+---
+import { CONFIG } from '../../config';
+interface Props {
+  variant?: 'hero' | 'inline';
+  formId?: string;
+  pendingCode?: string;
+}
+const { variant = 'hero', formId = 'default', pendingCode } = Astro.props;
+const uid = formId;
+---
+
+<div
+  id={`email-opt-in-${uid}`}
+  class={variant === 'hero'
+    ? 'w-full max-w-md mx-auto'
+    : 'w-full max-w-md'}
+  data-api-url={CONFIG.API_URL}
+  data-form-id={uid}
+  data-join-code={pendingCode || undefined}
+>
+  <form id={`opt-in-form-${uid}`} class="flex flex-col sm:flex-row gap-3" novalidate>
+    <input
+      type="email"
+      id={`opt-in-email-${uid}`}
+      name="email"
+      placeholder="you@example.com"
+      required
+      autocomplete="email"
+      class="input-field flex-1 text-base"
+    />
+    <button
+      type="submit"
+      id={`opt-in-submit-${uid}`}
+      class="btn-primary inline-flex items-center justify-center gap-2 whitespace-nowrap"
+    >
+      <span id={`opt-in-submit-text-${uid}`}>Get Early Access</span>
+    </button>
+  </form>
+
+  <p id={`opt-in-error-${uid}`} class="hidden text-error text-sm mt-3 text-center" role="alert"></p>
+
+  <div id={`opt-in-success-${uid}`} class="hidden">
+    <div class="bg-sage/10 border border-sage/20 rounded-2xl p-8 text-center animate-fade-in">
+      <div class="w-14 h-14 rounded-full bg-sage/20 flex items-center justify-center mx-auto mb-4">
+        <svg class="w-7 h-7 text-sage" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <h3 class="text-xl font-bold text-text-primary mb-2">Check your inbox!</h3>
+      <p class="text-text-secondary">
+        We've sent a confirmation link to <strong id={`opt-in-email-display-${uid}`} class="text-text-primary"></strong>.
+        Click it to unlock the CookTwo app.
+      </p>
+    </div>
+  </div>
+</div>
+
+<script is:inline define:vars={{ apiUrl: CONFIG.API_URL, uid, pendingCode }}>
+  (function () {
+    const container = document.getElementById(`email-opt-in-${uid}`);
+    if (!container) return;
+
+    const form = document.getElementById(`opt-in-form-${uid}`) as HTMLFormElement | null;
+    const emailInput = document.getElementById(`opt-in-email-${uid}`) as HTMLInputElement | null;
+    const submitBtn = document.getElementById(`opt-in-submit-${uid}`) as HTMLButtonElement | null;
+    const submitText = document.getElementById(`opt-in-submit-text-${uid}`);
+    const errorEl = document.getElementById(`opt-in-error-${uid}`);
+    const successEl = document.getElementById(`opt-in-success-${uid}`);
+    const emailDisplay = document.getElementById(`opt-in-email-display-${uid}`);
+
+    if (!form || !emailInput || !submitBtn || !errorEl || !successEl) return;
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorEl!.classList.add('hidden');
+
+      const email = emailInput!.value.trim();
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        errorEl!.textContent = 'Please enter a valid email address.';
+        errorEl!.classList.remove('hidden');
+        return;
+      }
+
+      submitBtn!.disabled = true;
+      if (submitText) submitText.textContent = 'Sending...';
+
+      try {
+        const body: Record<string, string> = { email };
+        const joinCode = container.getAttribute('data-join-code') || pendingCode || '';
+        if (joinCode) {
+          body.joinCode = joinCode;
+        }
+
+        const res = await fetch(`${apiUrl}/api/waitlist/subscribe`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || 'Something went wrong.');
+        }
+
+        form.classList.add('hidden');
+        if (emailDisplay) emailDisplay.textContent = email;
+        successEl!.classList.remove('hidden');
+      } catch (err) {
+        errorEl!.textContent = err instanceof Error ? err.message : 'Something went wrong.';
+        errorEl!.classList.remove('hidden');
+        submitBtn!.disabled = false;
+        if (submitText) submitText.textContent = 'Get Early Access';
+      }
+    });
+  })();
+</script>

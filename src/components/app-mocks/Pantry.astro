@@ -1,0 +1,58 @@
+---
+interface Props { appName?: string }
+const { appName = 'CookTwo' } = Astro.props;
+---
+
+<div class="bg-white rounded-2xl border border-border overflow-hidden shadow-sm">
+  <div class="px-4 py-3 border-b border-border flex items-center justify-between">
+    <div class="flex items-center gap-2">
+      <div class="w-6 h-6 rounded-lg bg-sage"></div>
+      <span class="text-sm font-semibold text-text-primary">{appName}</span>
+    </div>
+    <span class="text-xs text-text-secondary">Our Kitchen</span>
+  </div>
+
+  <div class="px-4 py-3 border-b border-border">
+    <p class="text-xs font-semibold text-text-primary mb-2">What's in your kitchen?</p>
+    <div class="px-3 py-2.5 rounded-lg border-2 border-sage bg-sage/5">
+      <p class="text-sm text-text-primary">1 litre whole milk, 250g swiss cheddar, chicken, 2 cups rice, spinach</p>
+    </div>
+    <p class="text-xs text-text-secondary mt-1">Type naturally — AI parses quantities, units &amp; categories</p>
+  </div>
+
+  <div class="px-4 py-3 border-b border-border">
+    <div class="flex items-center justify-between mb-2">
+      <p class="text-xs font-semibold text-text-primary">Our pantry (17 items)</p>
+      <span class="text-[10px] text-terracotta-dark bg-terracotta/10 px-2 py-0.5 rounded-full">4 to review</span>
+    </div>
+    <div class="grid grid-cols-2 gap-2">
+      <div class="flex items-center gap-2 px-2 py-1.5 rounded-lg border border-border"><span>🥬</span><span class="text-xs text-text-primary">Baby Spinach</span></div>
+      <div class="flex items-center gap-2 px-2 py-1.5 rounded-lg border border-border"><span>🍗</span><span class="text-xs text-text-primary">Chicken Breast</span></div>
+      <div class="flex items-center gap-2 px-2 py-1.5 rounded-lg border border-border"><span>🥚</span><span class="text-xs text-text-primary">Free-range Eggs</span></div>
+      <div class="flex items-center gap-2 px-2 py-1.5 rounded-lg border border-border"><span>🍚</span><span class="text-xs text-text-primary">Jasmine Rice</span></div>
+      <div class="flex items-center gap-2 px-2 py-1.5 rounded-lg border border-border"><span>🥦</span><span class="text-xs text-text-primary">Broccoli</span></div>
+      <div class="flex items-center gap-2 px-2 py-1.5 rounded-lg border border-border"><span>🧄</span><span class="text-xs text-text-primary">Garlic</span></div>
+    </div>
+  </div>
+
+  <div class="p-4">
+    <p class="text-xs font-semibold text-text-primary mb-3">AI suggests (from your pantry):</p>
+    <div class="space-y-2">
+      <div class="rounded-xl border border-border p-3">
+        <div class="flex items-center justify-between mb-2">
+          <div>
+            <p class="text-sm font-semibold text-text-primary">Chicken &amp; Tofu Stir-Fry</p>
+            <p class="text-xs text-text-secondary">25 min · 430–700 cal</p>
+          </div>
+          <span class="text-xs font-bold text-sage bg-sage/10 px-2 py-1 rounded-full">100% match</span>
+        </div>
+        <div class="flex flex-wrap gap-1">
+          <span class="text-xs px-2 py-0.5 rounded-full bg-sage/10 text-sage-dark">✓ Chicken</span>
+          <span class="text-xs px-2 py-0.5 rounded-full bg-sage/10 text-sage-dark">✓ Rice</span>
+          <span class="text-xs px-2 py-0.5 rounded-full bg-sage/10 text-sage-dark">✓ Spinach</span>
+          <span class="text-xs px-2 py-0.5 rounded-full bg-sage/10 text-sage-dark">✓ Garlic</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,199 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import comparisonData from '../data/comparison.json';
+const { categories, competitors } = comparisonData.comparison;
+---
+
+<BaseLayout title="Compare | CookTwo" description="See how CookTwo compares to Healthspan, Yummo, PlateMates, Fitia, Clove, and AnyList. The only app combining adaptive cooking, real-time sync, pantry AI, and couples-first design.">
+
+  <section class="section-padding bg-cream">
+    <div class="container-custom text-center">
+      <span class="badge-signature mb-6 inline-block">Compare</span>
+      <h1 class="text-4xl md:text-6xl font-bold text-text-primary mb-6">How CookTwo Compares</h1>
+      <p class="text-xl text-text-secondary max-w-2xl mx-auto">The only app that combines all 4 pillars: adaptive cooking, real-time sync, pantry-first AI, and couples-first design.</p>
+    </div>
+  </section>
+
+  <section class="section-padding bg-white">
+    <div class="container-custom">
+      <div class="overflow-x-auto">
+        <table class="comparison-table w-full min-w-[800px]">
+          <thead>
+            <tr>
+              <th class="sticky left-0 bg-sage/10 z-10 min-w-[240px]">Feature</th>
+              {competitors.map((comp) => (
+                <th class={comp.highlight ? 'bg-sage text-white min-w-[120px] text-center' : 'min-w-[120px] text-center'}>
+                  <div class="flex flex-col items-center">
+                    <span class="font-bold">{comp.name}</span>
+                    <span class={comp.highlight ? 'text-white/70 text-xs' : 'text-text-secondary text-xs'}>{comp.tag}</span>
+                  </div>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {categories.map((cat, i) => (
+              <tr>
+                <td class="sticky left-0 bg-white z-10 font-medium text-text-primary border-border">{cat.label}</td>
+                {competitors.map((comp) => {
+                  const val = comp.values[cat.id];
+                  const isHighlight = comp.highlight;
+                  if (cat.id === 'pricing') {
+                    return (
+                      <td class={isHighlight ? 'bg-sage/10 text-center font-semibold text-sage' : 'text-center'}>
+                        <span class={isHighlight ? 'text-sage font-bold' : 'text-text-primary'}>{val}</span>
+                      </td>
+                    );
+                  }
+                  if (val === 'full') {
+                    return (
+                      <td class={isHighlight ? 'bg-sage/10 text-center' : 'text-center'}>
+                        <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-sage/10 text-sage font-bold text-lg">&#10003;</span>
+                      </td>
+                    );
+                  }
+                  if (val === 'partial') {
+                    return (
+                      <td class={isHighlight ? 'bg-sage/10 text-center' : 'text-center'}>
+                        <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-terracotta/10 text-terracotta font-bold text-lg">&#9684;</span>
+                      </td>
+                    );
+                  }
+                  return (
+                    <td class={isHighlight ? 'bg-sage/10 text-center' : 'text-center'}>
+                      <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 text-gray-400 font-bold text-lg">&mdash;</span>
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div class="flex items-center justify-center gap-8 mt-8 text-sm text-text-secondary">
+        <span class="flex items-center gap-2">
+          <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-sage/10 text-sage font-bold text-sm">&#10003;</span> Full support
+        </span>
+        <span class="flex items-center gap-2">
+          <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-terracotta/10 text-terracotta font-bold text-sm">&#9684;</span> Partial
+        </span>
+        <span class="flex items-center gap-2">
+          <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 text-gray-400 font-bold text-sm">&mdash;</span> Not available
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <section class="section-padding bg-cream-dark">
+    <div class="container-custom">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl md:text-4xl font-bold text-text-primary mb-4">Why The Gap Exists</h2>
+        <p class="text-xl text-text-secondary max-w-2xl mx-auto">No competitor combines all 4 pillars. Here's what makes CookTwo fundamentally different.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        <div class="card">
+          <div class="w-12 h-12 rounded-full bg-sage/10 flex items-center justify-center mb-4">
+            <svg class="w-6 h-6 text-sage" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m8 12 3 3 5-5"/></svg>
+          </div>
+          <h3 class="text-xl font-bold text-text-primary mb-2">Real-Time Collaboration</h3>
+          <p class="text-text-secondary">WebSocket connections via Cloudflare Durable Objects. Per-household servers with sub-100ms sync. Both partners see changes instantly — grocery lists, pantry updates, meal plans.</p>
+        </div>
+
+        <div class="card">
+          <div class="w-12 h-12 rounded-full bg-terracotta/10 flex items-center justify-center mb-4">
+            <svg class="w-6 h-6 text-terracotta" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <h3 class="text-xl font-bold text-text-primary mb-2">Adaptive Cooking</h3>
+          <p class="text-text-secondary">Personalized portions per partner. The same recipe generates two different plating instructions — different serving sizes, different macro splits, calibrated to each person's TDEE and goals.</p>
+        </div>
+
+        <div class="card">
+          <div class="w-12 h-12 rounded-full bg-sage/10 flex items-center justify-center mb-4">
+            <svg class="w-6 h-6 text-sage" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96 12 12.01l8.73-5.05"/><path d="M12 22.08V12"/></svg>
+          </div>
+          <h3 class="text-xl font-bold text-text-primary mb-2">Pantry-First AI</h3>
+          <p class="text-text-secondary">Natural language pantry input. AI understands "chicken, 2 cups rice, spinach" and parses it automatically. Meal suggestions are built from what you already have, reducing waste and saving money.</p>
+        </div>
+
+        <div class="card">
+          <div class="w-12 h-12 rounded-full bg-terracotta/10 flex items-center justify-center mb-4">
+            <svg class="w-6 h-6 text-terracotta" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+          </div>
+          <h3 class="text-xl font-bold text-text-primary mb-2">Relationship-First UX</h3>
+          <p class="text-text-secondary">"We" language throughout. Partner identity, shared ownership, one household. Per-household pricing, not per-seat. Every feature is designed for two people, not one person times two.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section-padding bg-white">
+    <div class="container-custom">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl md:text-4xl font-bold text-text-primary mb-4">Competitor Spotlight</h2>
+        <p class="text-xl text-text-secondary max-w-2xl mx-auto">Each competitor does something well. None do everything together.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+
+        <div class="bg-white rounded-2xl border border-border p-6 shadow-sm">
+          <div class="flex items-center gap-3 mb-4">
+            <span class="text-lg font-bold text-text-primary">Healthspan</span>
+            <span class="bg-terracotta/10 text-terracotta text-xs px-2.5 py-1 rounded-full font-medium">Rising Threat</span>
+          </div>
+          <p class="text-text-secondary text-sm">Auto-adjusting portions based on body metrics — a strong concept. But lacks real-time sync and pantry management. No shared grocery list, no collaborative cooking experience.</p>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-border p-6 shadow-sm">
+          <div class="flex items-center gap-3 mb-4">
+            <span class="text-lg font-bold text-text-primary">Yummo</span>
+            <span class="bg-gray-100 text-text-secondary text-xs px-2.5 py-1 rounded-full font-medium">$9.99/mo</span>
+          </div>
+          <p class="text-text-secondary text-sm">Same concept — couples-focused meal planning. But zero execution momentum. No real-time sync, no pantry AI, no adaptive portions. Double CookTwo's price with a fraction of the features.</p>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-border p-6 shadow-sm">
+          <div class="flex items-center gap-3 mb-4">
+            <span class="text-lg font-bold text-text-primary">PlateMates</span>
+            <span class="bg-gray-100 text-text-secondary text-xs px-2.5 py-1 rounded-full font-medium">$5.99/mo</span>
+          </div>
+          <p class="text-text-secondary text-sm">iOS only. Partial pantry tracking and recipe library. No real-time sync, no adaptive cooking, no PWA. Limited to Apple's ecosystem with no cross-platform plans.</p>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-border p-6 shadow-sm">
+          <div class="flex items-center gap-3 mb-4">
+            <span class="text-lg font-bold text-text-primary">Clove</span>
+            <span class="bg-sage/10 text-sage text-xs px-2.5 py-1 rounded-full font-medium">$4.15M funded</span>
+          </div>
+          <p class="text-text-secondary text-sm">Well-funded with venture backing. Solid grocery list and recipe library. But not built for couples — solo-first architecture with no adaptive cooking, no real-time partner sync.</p>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-border p-6 shadow-sm">
+          <div class="flex items-center gap-3 mb-4">
+            <span class="text-lg font-bold text-text-primary">Fitia</span>
+            <span class="bg-sage/10 text-sage text-xs px-2.5 py-1 rounded-full font-medium">10M+ users</span>
+          </div>
+          <p class="text-text-secondary text-sm">Scale threat with massive user base. Strong meal planning and recipe library. But solo-first architecture — no real-time sync, no shared kitchen, no couples features at all.</p>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-border p-6 shadow-sm">
+          <div class="flex items-center gap-3 mb-4">
+            <span class="text-lg font-bold text-text-primary">AnyList</span>
+            <span class="bg-gray-100 text-text-secondary text-xs px-2.5 py-1 rounded-full font-medium">Grocery only</span>
+          </div>
+          <p class="text-text-secondary text-sm">Real-time shared grocery list — they do this well. But that's all they do. No AI, no meal generation, no pantry management, no adaptive cooking. A feature, not a platform.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <section class="section-padding bg-sage">
+    <div class="container-custom text-center">
+      <h2 class="text-3xl md:text-5xl font-bold text-white mb-4">The only app built for two.</h2>
+      <p class="text-xl text-white/80 max-w-2xl mx-auto mb-8">Every other app is built for one person. CookTwo is built for your kitchen — together.</p>
+      <a href="/#get-early-access" class="inline-block bg-white text-sage px-8 py-4 rounded-xl text-lg font-semibold transition-colors hover:bg-cream shadow-lg">Get Started Free</a>
+    </div>
+  </section>
+
+</BaseLayout>

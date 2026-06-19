@@ -1,0 +1,76 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import EmailOptIn from '../components/forms/EmailOptIn.astro';
+---
+
+<BaseLayout
+  title="CookTwo | Join Your Partner's Kitchen"
+  description="Your partner invited you to share a kitchen on CookTwo. Enter your email and we'll send you a link to unlock the app."
+  canonicalURL="https://cooktwo.app/join"
+>
+
+  <section class="section-padding bg-cream relative overflow-hidden">
+    <div class="absolute inset-0 opacity-30">
+      <div class="absolute top-20 left-10 w-72 h-72 bg-sage/20 rounded-full blur-3xl"></div>
+      <div class="absolute bottom-10 right-10 w-96 h-96 bg-terracotta/15 rounded-full blur-3xl"></div>
+    </div>
+    <div class="container-custom relative z-10 text-center">
+      <div class="max-w-md mx-auto">
+        <div id="invite-card">
+          <div class="w-16 h-16 rounded-2xl bg-sage/10 flex items-center justify-center mx-auto mb-6">
+            <svg class="w-8 h-8 text-sage" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <h1 class="text-3xl md:text-4xl font-bold text-text-primary mb-4" id="invite-heading">
+            You're invited!
+          </h1>
+          <p class="text-lg text-text-secondary mb-8" id="invite-text">
+            Someone wants to share a kitchen with you on CookTwo — a collaborative meal planning app for couples.
+          </p>
+          <p class="text-text-secondary text-sm mb-8">
+            Enter your email to create your account and join their kitchen.
+          </p>
+
+          <div id="email-section">
+            <EmailOptIn variant="hero" formId="join" />
+          </div>
+        </div>
+
+        <p class="text-text-secondary/60 text-xs mt-8">
+          Already have access? <a id="login-link" href="https://cooktwo.app" class="text-sage hover:text-sage-dark underline">Open the app</a>
+        </p>
+      </div>
+    </div>
+  </section>
+
+</BaseLayout>
+
+<script>
+  (function () {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('c');
+    const heading = document.getElementById('invite-heading');
+    const text = document.getElementById('invite-text');
+
+    if (code && /^\d{6}$/.test(code)) {
+      if (heading) heading.textContent = 'You\'ve been invited to share a kitchen!';
+      if (text) text.textContent = 'Someone wants to share a kitchen with you on CookTwo. Enter your email below to create your account and join their shared grocery list, pantry, and meal plans.';
+
+      const optIn = document.getElementById('email-opt-in-join');
+      if (optIn) {
+        optIn.setAttribute('data-join-code', code);
+      }
+    }
+
+    // Also support legacy path-based format: /join/123456
+    const pathMatch = window.location.pathname.match(/\/join\/(\d{6})/);
+    if (pathMatch) {
+      if (heading) heading.textContent = 'You\'ve been invited to share a kitchen!';
+      if (text) text.textContent = 'Someone wants to share a kitchen with you on CookTwo. Enter your email below to create your account and join their shared grocery list, pantry, and meal plans.';
+
+      const optIn = document.getElementById('email-opt-in-join');
+      if (optIn) {
+        optIn.setAttribute('data-join-code', pathMatch[1]);
+      }
+    }
+  })();
+</script>

@@ -1,0 +1,62 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import faqData from '../data/faq.json';
+---
+
+<BaseLayout title="FAQ | CookTwo" description="Questions answered about CookTwo — the collaborative adaptive nutrition app for couples. Learn about product features, technology stack, and pricing.">
+
+  <section class="section-padding bg-cream">
+    <div class="container-custom text-center">
+      <span class="badge-signature mb-6 inline-block">FAQ</span>
+      <h1 class="text-4xl md:text-6xl font-bold text-text-primary mb-6">Questions? Answered.</h1>
+      <p class="text-xl text-text-secondary max-w-2xl mx-auto">Everything you need to know about CookTwo, from how it works to what it costs.</p>
+    </div>
+  </section>
+
+  <section class="section-padding bg-white">
+    <div class="container-custom">
+      <div class="max-w-3xl mx-auto space-y-12">
+        {faqData.faq.map((section) => (
+          <div>
+            <h2 class="text-2xl font-bold text-text-primary mb-6 flex items-center gap-3">
+              <div class="w-8 h-8 rounded-full bg-sage/10 flex items-center justify-center flex-shrink-0">
+                {section.category === 'Product' && (
+                  <svg class="w-4 h-4 text-sage" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                )}
+                {section.category === 'Technology' && (
+                  <svg class="w-4 h-4 text-sage" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                )}
+                {section.category === 'Pricing' && (
+                  <svg class="w-4 h-4 text-sage" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                )}
+              </div>
+              {section.category}
+            </h2>
+            <div class="space-y-4">
+              {section.questions.map((item) => (
+                <details class="group bg-white rounded-2xl border border-border overflow-hidden shadow-sm">
+                  <summary class="cursor-pointer flex items-center justify-between gap-4 px-6 py-5 text-text-primary font-semibold text-lg hover:bg-sage/5 transition-colors">
+                    <span>{item.q}</span>
+                    <svg class="w-5 h-5 text-text-secondary flex-shrink-0 transition-transform group-open:rotate-180" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                  </summary>
+                  <div class="px-6 pb-5 pt-0 text-text-secondary leading-relaxed border-t border-border/50">
+                    <p class="pt-4">{item.a}</p>
+                  </div>
+                </details>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section-padding bg-cream-dark">
+    <div class="container-custom text-center">
+      <h2 class="text-3xl md:text-4xl font-bold text-text-primary mb-4">Still have questions?</h2>
+      <p class="text-xl text-text-secondary max-w-2xl mx-auto mb-8">We're happy to help. Reach out and we'll get back to you within 24 hours.</p>
+      <a href="/contact" class="btn-primary inline-block">Contact Us</a>
+    </div>
+  </section>
+
+</BaseLayout>

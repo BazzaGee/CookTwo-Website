@@ -1,0 +1,31 @@
+---
+import BaseHead from '../components/layout/BaseHead.astro';
+import Header from '../components/layout/Header.astro';
+import Footer from '../components/layout/Footer.astro';
+import EarlyAccessModal from '../components/forms/EarlyAccessModal.astro';
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description: string;
+  canonicalURL?: string;
+  ogImage?: string;
+}
+
+const { title, description, canonicalURL, ogImage } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead title={title} description={description} canonicalURL={canonicalURL} ogImage={ogImage} />
+  </head>
+  <body class="min-h-screen flex flex-col pt-20">
+    <Header />
+    <main class="flex-grow">
+      <slot />
+    </main>
+    <Footer />
+    <EarlyAccessModal />
+  </body>
+</html>

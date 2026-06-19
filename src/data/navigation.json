@@ -1,0 +1,33 @@
+{
+  "navigation": {
+    "primary": [
+      {
+        "label": "Features",
+        "href": "/features",
+        "children": [
+          { "label": "Adaptive Cooking", "href": "/features/adaptive-cooking" },
+          { "label": "Shared Grocery List", "href": "/features/shared-grocery-list" },
+          { "label": "Pantry AI", "href": "/features/pantry-ai" },
+          { "label": "Meal Planning", "href": "/features/meal-planning" },
+          { "label": "Real-Time Sync", "href": "/features/real-time-sync" }
+        ]
+      },
+      { "label": "How It Works", "href": "/how-it-works" },
+      { "label": "Compare", "href": "/compare" },
+      { "label": "About", "href": "/about" },
+      { "label": "FAQ", "href": "/faq" }
+    ],
+    "footer": {
+      "product": [
+        { "label": "Features", "href": "/features" },
+        { "label": "How It Works", "href": "/how-it-works" },
+        { "label": "Compare", "href": "/compare" }
+      ],
+      "company": [
+        { "label": "About Us", "href": "/about" },
+        { "label": "FAQ", "href": "/faq" },
+        { "label": "Contact", "href": "/contact" }
+      ]
+    }
+  }
+}

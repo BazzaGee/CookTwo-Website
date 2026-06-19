@@ -1,0 +1,260 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PhoneFrame from '../../components/app-mocks/PhoneFrame.astro';
+
+const syncItems = [
+  { icon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>`, name: 'Grocery Items', desc: 'Add, check, remove — instant sync' },
+  { icon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>`, name: 'Pantry Updates', desc: 'New items and changes propagate live' },
+  { icon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`, name: 'Meal Plans', desc: 'Week plans sync across both devices' },
+  { icon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`, name: 'Partner Profiles', desc: 'Goals, preferences, and settings stay aligned' }
+];
+---
+
+<BaseLayout title="Real-Time Sync Architecture — CookTwo" description="Changes sync in under 100 milliseconds. Cloudflare Durable Objects power the real-time layer with offline support and global edge deployment.">
+  <section class="section-padding">
+    <div class="container-custom">
+      <div class="max-w-3xl mx-auto text-center">
+        <span class="bg-text-primary text-white text-xs px-3 py-1 rounded-full font-medium mb-4 inline-block">Infrastructure</span>
+        <h1 class="text-4xl md:text-6xl font-bold text-text-primary mb-6">Changes sync in under<br/>100 milliseconds.</h1>
+        <p class="text-xl text-text-secondary leading-relaxed">
+          CookTwo's real-time sync runs on Cloudflare Durable Objects at the edge. Every grocery item, pantry update, and meal plan change syncs near-instantly — even on slow connections.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="pb-16">
+    <div class="container-custom">
+      <div class="flex flex-col md:flex-row items-center justify-center gap-8">
+        <div class="max-w-sm order-2 md:order-1">
+          <p class="text-sm font-semibold text-sage uppercase tracking-wider mb-2">The live app</p>
+          <p class="text-text-secondary leading-relaxed">One shared kitchen, always in step. When Alex checks off milk at the store, it vanishes from Jordan's screen before they've walked down the aisle — powered by a per-couple Durable Object.</p>
+        </div>
+        <PhoneFrame src="/images/app/01-shopping.webp" alt="CookTwo live shopping list sync" class="max-w-[240px] order-1 md:order-2" />
+      </div>
+    </div>
+  </section>
+
+  <section class="pb-20">
+    <div class="container-custom">
+      <div class="max-w-3xl mx-auto">
+        <div class="card">
+          <h3 class="font-bold text-text-primary text-center mb-8 text-lg">Architecture</h3>
+
+          <div class="flex flex-col md:flex-row items-center justify-between gap-4 md:gap-2">
+            <div class="bg-cream rounded-xl p-4 text-center flex-1 min-w-[120px]">
+              <div class="w-12 h-12 rounded-full bg-sage/10 flex items-center justify-center text-sage mx-auto mb-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+              </div>
+              <p class="text-sm font-bold text-text-primary">Phone A</p>
+              <p class="text-xs text-text-secondary">Partner 1</p>
+            </div>
+
+            <div class="flex flex-col items-center gap-1 text-sage">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden md:block"><polyline points="9 18 15 12 9 6"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="md:hidden"><polyline points="6 9 12 15 18 9"/></svg>
+              <p class="text-[10px] font-mono text-text-secondary">WebSocket</p>
+            </div>
+
+            <div class="bg-sage/10 rounded-xl p-4 text-center flex-1 min-w-[140px] border-2 border-sage/20">
+              <div class="w-12 h-12 rounded-full bg-sage flex items-center justify-center text-white mx-auto mb-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              </div>
+              <p class="text-sm font-bold text-text-primary">Durable Object</p>
+              <p class="text-xs text-text-secondary">Cloudflare Edge</p>
+            </div>
+
+            <div class="flex flex-col items-center gap-1 text-sage">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden md:block"><polyline points="9 18 15 12 9 6"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="md:hidden"><polyline points="6 9 12 15 18 9"/></svg>
+              <p class="text-[10px] font-mono text-text-secondary">WebSocket</p>
+            </div>
+
+            <div class="bg-cream rounded-xl p-4 text-center flex-1 min-w-[120px]">
+              <div class="w-12 h-12 rounded-full bg-terracotta/10 flex items-center justify-center text-terracotta mx-auto mb-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+              </div>
+              <p class="text-sm font-bold text-text-primary">Phone B</p>
+              <p class="text-xs text-text-secondary">Partner 2</p>
+            </div>
+          </div>
+
+          <div class="mt-8 pt-6 border-t border-border text-center">
+            <div class="inline-flex items-center gap-6 text-sm text-text-secondary">
+              <span class="flex items-center gap-1">
+                <span class="w-2 h-2 rounded-full bg-sage animate-pulse-soft"></span>
+                Persistent connection
+              </span>
+              <span>&lt;100ms latency</span>
+              <span>Auto-reconnect</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section-padding bg-cream-dark">
+    <div class="container-custom">
+      <div class="text-center max-w-2xl mx-auto mb-12">
+        <h2 class="text-3xl md:text-4xl font-bold text-text-primary mb-4">What Syncs</h2>
+        <p class="text-lg text-text-secondary">Every shared data point stays in perfect sync between both partners.</p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-3xl mx-auto">
+        {syncItems.map((item) => (
+          <div class="card flex items-start gap-4">
+            <div class="w-10 h-10 rounded-xl bg-sage/10 flex items-center justify-center text-sage flex-shrink-0">
+              <Fragment set:html={item.icon} />
+            </div>
+            <div>
+              <p class="font-bold text-text-primary">{item.name}</p>
+              <p class="text-sm text-text-secondary">{item.desc}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section-padding">
+    <div class="container-custom">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+        <div>
+          <h2 class="text-2xl md:text-3xl font-bold text-text-primary mb-6">Offline Queue</h2>
+          <p class="text-text-secondary leading-relaxed mb-6">
+            Dead zones in the grocery store? Elevator with no signal? No problem. CookTwo queues all changes locally and syncs them the moment you reconnect.
+          </p>
+
+          <div class="space-y-4">
+            <div class="flex items-start gap-3">
+              <div class="w-8 h-8 rounded-lg bg-sage/10 flex items-center justify-center text-sage flex-shrink-0 mt-0.5">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <div>
+                <p class="font-semibold text-text-primary">localStorage Queue</p>
+                <p class="text-sm text-text-secondary">Changes are persisted to localStorage immediately. Even if the app closes, nothing is lost.</p>
+              </div>
+            </div>
+
+            <div class="flex items-start gap-3">
+              <div class="w-8 h-8 rounded-lg bg-sage/10 flex items-center justify-center text-sage flex-shrink-0 mt-0.5">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <div>
+                <p class="font-semibold text-text-primary">Auto-Drain on Reconnect</p>
+                <p class="text-sm text-text-secondary">When the connection is restored, the queue drains automatically — FIFO, no duplicates, no conflicts.</p>
+              </div>
+            </div>
+
+            <div class="flex items-start gap-3">
+              <div class="w-8 h-8 rounded-lg bg-sage/10 flex items-center justify-center text-sage flex-shrink-0 mt-0.5">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <div>
+                <p class="font-semibold text-text-primary">Conflict Resolution</p>
+                <p class="text-sm text-text-secondary">Last-write-wins with server reconciliation. If both partners edit the same item, the server merges intelligently.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h2 class="text-2xl md:text-3xl font-bold text-text-primary mb-6">Progressive Web App</h2>
+          <p class="text-text-secondary leading-relaxed mb-6">
+            Install CookTwo directly from the browser. No App Store review, no 30% cut, no update delays. Works like a native app.
+          </p>
+
+          <div class="space-y-4">
+            <div class="flex items-start gap-3">
+              <div class="w-8 h-8 rounded-lg bg-sage/10 flex items-center justify-center text-sage flex-shrink-0 mt-0.5">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <div>
+                <p class="font-semibold text-text-primary">No App Store Needed</p>
+                <p class="text-sm text-text-secondary">Install directly from Chrome, Safari, or Edge. Full-screen experience with home screen icon.</p>
+              </div>
+            </div>
+
+            <div class="flex items-start gap-3">
+              <div class="w-8 h-8 rounded-lg bg-sage/10 flex items-center justify-center text-sage flex-shrink-0 mt-0.5">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <div>
+                <p class="font-semibold text-text-primary">Works Like Native</p>
+                <p class="text-sm text-text-secondary">Push notifications, offline support, smooth animations, and fast load times — indistinguishable from a native app.</p>
+              </div>
+            </div>
+
+            <div class="flex items-start gap-3">
+              <div class="w-8 h-8 rounded-lg bg-sage/10 flex items-center justify-center text-sage flex-shrink-0 mt-0.5">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <div>
+                <p class="font-semibold text-text-primary">Instant Updates</p>
+                <p class="text-sm text-text-secondary">No waiting for App Store review. New features and fixes go live immediately — you always have the latest version.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section-padding bg-cream-dark">
+    <div class="container-custom">
+      <div class="text-center max-w-2xl mx-auto mb-12">
+        <h2 class="text-3xl md:text-4xl font-bold text-text-primary mb-4">Global Edge Deployment</h2>
+        <p class="text-lg text-text-secondary">Cloudflare's network spans 300+ cities worldwide. Your data is always close.</p>
+      </div>
+
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto">
+        <div class="stat-card">
+          <p class="stat-number">300+</p>
+          <p class="stat-label">Edge Cities</p>
+        </div>
+        <div class="stat-card">
+          <p class="stat-number">&lt;50ms</p>
+          <p class="stat-label">Avg Latency</p>
+        </div>
+        <div class="stat-card">
+          <p class="stat-number">99.9%</p>
+          <p class="stat-label">Uptime</p>
+        </div>
+        <div class="stat-card">
+          <p class="stat-number">0</p>
+          <p class="stat-label">Cold Starts</p>
+        </div>
+      </div>
+
+      <div class="max-w-2xl mx-auto mt-8">
+        <div class="card">
+          <div class="flex items-start gap-4">
+            <div class="w-10 h-10 rounded-xl bg-sage/10 flex items-center justify-center text-sage flex-shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+            </div>
+            <div>
+              <h3 class="font-bold text-text-primary mb-1">Durable Objects = Stateful WebSocket</h3>
+              <p class="text-sm text-text-secondary leading-relaxed">
+                Unlike serverless functions that spin down between requests, Durable Objects maintain a persistent in-memory state and an open WebSocket connection. That's how CookTwo achieves sub-100ms sync — the connection is always alive, always ready.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section-padding">
+    <div class="container-custom text-center">
+      <h2 class="text-3xl md:text-4xl font-bold text-text-primary mb-4">Built on a Solid Foundation</h2>
+      <p class="text-lg text-text-secondary mb-8 max-w-2xl mx-auto">
+        Real-time sync powers every CookTwo feature. See how it enables the full experience.
+      </p>
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+        <a href="/features" class="btn-primary">All Features</a>
+        <a href="/how-it-works" class="btn-secondary">How It Works</a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

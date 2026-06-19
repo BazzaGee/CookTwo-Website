@@ -1,0 +1,75 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import featuresData from '../../data/features.json';
+
+const { features } = featuresData;
+
+const icons: Record<string, string> = {
+  'chef-hat': '<svg class="w-7 h-7" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"/><line x1="6" x2="18" y1="17" y2="17"/></svg>',
+  'shopping-basket': '<svg class="w-7 h-7" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 11 4-7"/><path d="m19 11-4-7"/><path d="M2 11h20"/><path d="m3.5 11 1.7 7.7a2 2 0 0 0 2 1.3h9.6a2 2 0 0 0 2-1.3L20.5 11"/></svg>',
+  'boxes': '<svg class="w-7 h-7" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>',
+  'calendar': '<svg class="w-7 h-7" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg>',
+  'wifi': '<svg class="w-7 h-7" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h.01"/><path d="M8.5 16.5a5 5 0 0 1 7 0"/><path d="M5 13a10 10 0 0 1 14 0"/><path d="M1.5 9.5a15 15 0 0 1 21 0"/></svg>',
+};
+---
+
+<BaseLayout title="Features — CookTwo" description="Every feature in CookTwo built for couples cooking together. Adaptive portions, real-time sync, AI meal planning, and more.">
+  <section class="section-padding">
+    <div class="container-custom">
+      <div class="text-center max-w-3xl mx-auto mb-16">
+        <span class="badge-live mb-4 inline-block">5 Core Features</span>
+        <h1 class="text-4xl md:text-6xl font-bold text-text-primary mb-6">Every feature built for two</h1>
+        <p class="text-xl text-text-secondary leading-relaxed">
+          CookTwo isn't a meal planner with sharing bolted on. Every feature was designed from day one for couples with different dietary goals.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {features.map((feature) => (
+          <a href={feature.href} class="card group block">
+            <div class="flex items-start gap-4 mb-4">
+              <div class="w-12 h-12 rounded-xl bg-sage/10 flex items-center justify-center text-sage flex-shrink-0">
+                <Fragment set:html={icons[feature.icon] || icons['chef-hat']} />
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-3 mb-2">
+                  <span class={feature.badge === 'Signature Feature' ? 'badge-signature' : feature.badge === 'Infrastructure' ? 'bg-text-primary text-white text-xs px-3 py-1 rounded-full font-medium' : 'badge-live'}>{feature.badge}</span>
+                </div>
+                <h2 class="text-xl font-bold text-text-primary group-hover:text-sage transition-colors">{feature.title}</h2>
+              </div>
+            </div>
+
+            <p class="text-text-secondary leading-relaxed mb-5">{feature.description}</p>
+
+            <ul class="space-y-2 mb-6">
+              {feature.highlights.map((h) => (
+                <li class="flex items-center gap-2 text-sm text-text-secondary">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-sage flex-shrink-0"><polyline points="20 6 9 17 4 12"/></svg>
+                  {h}
+                </li>
+              ))}
+            </ul>
+
+            <span class="text-sage font-medium text-sm group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">
+              Learn more
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section-padding bg-cream-dark">
+    <div class="container-custom text-center">
+      <h2 class="text-3xl md:text-4xl font-bold text-text-primary mb-4">Ready to cook together?</h2>
+      <p class="text-lg text-text-secondary mb-8 max-w-2xl mx-auto">
+        Every feature works together seamlessly. Adaptive portions, synced grocery lists, AI meal plans — all designed for two.
+      </p>
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+        <a href="/how-it-works" class="btn-primary">See How It Works</a>
+        <a href="/compare" class="btn-secondary">Compare Alternatives</a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

@@ -1,0 +1,54 @@
+---
+interface Props {
+  title: string;
+  description: string;
+  canonicalURL?: string;
+  ogImage?: string;
+}
+
+const { title, description, canonicalURL, ogImage } = Astro.props;
+const siteURL = 'https://cooktwo.app';
+const canonical = canonicalURL ? `${siteURL}${canonicalURL}` : Astro.url;
+const ogImg = ogImage || `${siteURL}/images/hero/og-homepage.webp`;
+---
+
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="generator" content={Astro.generator} />
+
+<title>{title}</title>
+<meta name="description" content={description} />
+<meta name="keywords" content="couples meal planning, shared grocery list, adaptive cooking, meal planning for couples, pantry AI, CookTwo, collaborative nutrition, two plates" />
+<meta name="author" content="CookTwo" />
+<meta name="robots" content="noindex, nofollow" />
+
+<link rel="canonical" href={canonical} />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:type" content="website" />
+<meta property="og:url" content={canonical} />
+<meta property="og:image" content={ogImg} />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:locale" content="en_US" />
+<meta property="og:site_name" content="CookTwo" />
+
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={ogImg} />
+
+<link rel="manifest" href="/manifest.json" />
+<meta name="theme-color" content="#7A9E7E" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="CookTwo" />
+
+<meta name="googlebot" content="noindex, nofollow" />
+
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="apple-touch-icon" href="/images/logo/logo-icon.png" />

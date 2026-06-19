@@ -1,0 +1,111 @@
+{
+  "features": [
+    {
+      "id": "adaptive-cooking",
+      "title": "Adaptive Shared Cooking",
+      "badge": "Signature Feature",
+      "description": "Same recipe. Two plates. Both partners hit their goals automatically. The AI calculates personalized portions based on each partner's TDEE, body profile, and dietary goals.",
+      "icon": "chef-hat",
+      "href": "/features/adaptive-cooking",
+      "highlights": [
+        "TDEE-based portion calculation using Mifflin-St Jeor equation",
+        "Individualized plating instructions per partner",
+        "Macro breakdown (Protein, Carbs, Fat) per plate",
+        "Works with any recipe — no special meals needed"
+      ]
+    },
+    {
+      "id": "shared-grocery-list",
+      "title": "Real-Time Shared Grocery List",
+      "badge": "Live",
+      "description": "Add milk at home. It appears on your partner's phone at the store in under 100ms. WebSocket-powered sync via Cloudflare Durable Objects. No phone calls. No duplicate texts.",
+      "icon": "shopping-basket",
+      "href": "/features/shared-grocery-list",
+      "highlights": [
+        "Sub-100ms WebSocket sync between partners",
+        "AI auto-categorization into 7 categories",
+        "Quick-add chips for frequently bought items",
+        "One-tap 'Done Shopping' moves food to pantry"
+      ]
+    },
+    {
+      "id": "pantry-ai",
+      "title": "Pantry-First AI",
+      "badge": "Live",
+      "description": "Type 'chicken, rice, spinach.' The AI parses natural language, categorizes items, and uses your pantry to suggest meals you can make right now. Zero shopping trips needed.",
+      "icon": "boxes",
+      "href": "/features/pantry-ai",
+      "highlights": [
+        "Natural language pantry input — no barcode scanning",
+        "AI-powered category sorting with fallback review",
+        "Smart shopping-to-pantry flow after grocery runs",
+        "Pantry-aware meal suggestions reduce food waste"
+      ]
+    },
+    {
+      "id": "meal-planning",
+      "title": "AI Meal Planning",
+      "badge": "Live",
+      "description": "Chat with AI to plan tonight's dinner or generate an entire week. Multi-provider AI chain (DeepSeek, Alibaba, ZAI) with automatic fallback. Missing ingredients go straight to your shared list.",
+      "icon": "calendar",
+      "href": "/features/meal-planning",
+      "highlights": [
+        "Conversational AI chat with session memory",
+        "Generate single meals or full 7-day plans",
+        "Save favorite recipes for quick access",
+        "AI-generated meal photography (Flux.2 via OpenRouter)"
+      ]
+    },
+    {
+      "id": "real-time-sync",
+      "title": "Real-Time Sync Architecture",
+      "badge": "Infrastructure",
+      "description": "Built on Cloudflare Durable Objects with WebSocket connections. Every change — grocery items, pantry updates, meal plans — syncs between both partners in real-time. Works offline too.",
+      "icon": "wifi",
+      "href": "/features/real-time-sync",
+      "highlights": [
+        "Cloudflare Durable Objects with per-household isolation",
+        "WebSocket connections with sub-100ms latency",
+        "Offline queue with automatic sync on reconnect",
+        "PWA installable — works like a native app"
+      ]
+    }
+  ],
+  "steps": [
+    {
+      "number": 1,
+      "title": "Create Your Kitchen",
+      "description": "Set up your profile — name, dietary preferences, body goals, and what's in your kitchen right now. Takes 2 minutes.",
+      "image": "/images/steps/step-1-invite.webp",
+      "detail": "Enter your name, select dietary preferences (Vegetarian, Keto, etc.), add allergies, set body goals (lose weight, build muscle, just eat well), and optionally enter body metrics for personalized portions."
+    },
+    {
+      "number": 2,
+      "title": "Link With Your Partner",
+      "description": "Share a 6-digit code. Your partner enters it. Instantly connected — one shared kitchen, two profiles.",
+      "image": "/images/steps/step-2-goals.webp",
+      "detail": "A unique 6-digit invite code links both partners. No account creation friction — just enter the code and you're sharing the same kitchen, grocery list, pantry, and meal plans."
+    },
+    {
+      "number": 3,
+      "title": "Stock Your Pantry",
+      "description": "Type what you have in natural language — 'chicken, 2 cups rice, spinach.' The AI parses it, categorizes it, and remembers it.",
+      "image": "/images/steps/step-3-pantry.webp",
+      "detail": "No barcode scanning. No manual entry. Just type what you have and the AI handles parsing quantities, categories, and brands. The pantry drives smarter meal suggestions."
+    },
+    {
+      "number": 4,
+      "title": "Shop Together",
+      "description": "One shared grocery list. Both partners see changes in real-time. AI auto-categorizes everything. Check off items as you shop.",
+      "image": "/images/steps/step-4-generate.webp",
+      "detail": "Items sync in under 100ms via WebSocket. Quick-add chips surface your most-bought items. When you're done, one tap moves food items to pantry and removes non-food items."
+    },
+    {
+      "number": 5,
+      "title": "Cook Together",
+      "description": "Follow one recipe. The AI gives each partner their own plating — different portions, different macros, same delicious dinner.",
+      "image": "/images/steps/step-5-cook.webp",
+      "detail": "The adaptive cooking engine calculates personalized portions using each partner's TDEE. Partner A gets 450 cal, Partner B gets 700 cal. Same stir-fry, same pan, different plates."
+    }
+  ]
+}
