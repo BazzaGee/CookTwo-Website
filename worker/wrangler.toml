@@ -28,8 +28,8 @@ bucket_name = "cupla-diet-research"
 [vars]
 AI_PROVIDER = "deepseek"
 VAPID_PUBLIC_KEY = "BGvuzRtY6I_rrv2HXWdg9zFD2Tb8LlkywOScoPLlx9xb66b0wxa0YuNt1U3XaU-MrmC_4ZHWQS3Y9ye5RHsvix8"
-SITE_URL = "https://couples-food-system-api.byte-digital.workers.dev"
-PWA_URL = "https://cfs-app.pages.dev"
+SITE_URL = "https://cooktwo.com"
+PWA_URL = "https://cooktwo.app/PWA"
 RESEND_FROM = "CookTwo <Krystle@cooktwo.com>"
 
 [env.staging]

@@ -7,6 +7,8 @@ import { createPartner, getPartners, handleGetProfiles, handleUpdateProfile, upd
 import { handleGetWeekPlan, handleGenerateWeekPlan, handleConfirmMeal } from './routes/mealplan';
 import { handleGetRecipes, handleSaveRecipe, handleDeleteRecipe } from './routes/recipes';
 import { handleMealChat } from './routes/mealChat';
+import { handleGetActivity } from './routes/activity';
+import { logToD1 } from './lib/activity';
 import { handleSubscribe, handleVerify, handleValidateAccess } from './routes/waitlist';
 import { handleListDiets, handleGetDiet, handleListArticles, handleGetArticle } from './routes/diet-info';
 import { getCoupleDietRules } from './lib/diet-rules';
@@ -107,7 +109,7 @@ app.post('/api/billing/stripe/webhook', async (c) => {
 
   try {
     const event = await verifyAndParseWebhook(c.env, rawBody, signature);
-    await applyWebhookEvent(c.env.DB, event);
+    await applyWebhookEvent(c.env, c.env.DB, event);
     return c.json({ received: true });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'webhook error';
@@ -137,8 +139,8 @@ app.post('/api/household/:id/billing/checkout', async (c) => {
       c.env,
       householdId,
       plan,
-      `${c.env.SITE_URL || 'https://cooktwo.com'}/profiles?upgraded=true`,
-      `${c.env.SITE_URL || 'https://cooktwo.com'}/profiles`,
+      `${c.env.PWA_URL || 'https://cooktwo.app/PWA'}?upgraded=true`,
+      `${c.env.PWA_URL || 'https://cooktwo.app/PWA'}`,
     );
     return c.json({ url });
   } catch (err) {
@@ -167,7 +169,7 @@ app.post('/api/household/:id/billing/portal', async (c) => {
     const { url } = await createPortalSession(
       c.env,
       sub.stripe_customer_id,
-      `${c.env.SITE_URL || 'https://cooktwo.com'}/profiles`,
+      `${c.env.PWA_URL || 'https://cooktwo.app/PWA'}`,
     );
     return c.json({ url });
   } catch (err) {
@@ -200,10 +202,11 @@ app.post('/api/household/create', async (c) => {
   const slot = 1 as const;
   const now = Date.now();
 
+  const placeholderCode = `__${crypto.randomUUID()}__`;
   await c.env.DB.prepare(
     `INSERT INTO households (id, invite_code, created_at) VALUES (?, ?, ?)`,
   )
-    .bind(householdId, '__PLACEHOLDER__', now)
+    .bind(householdId, placeholderCode, now)
     .run();
 
   await createPartner(c.env.DB, householdId, partnerId, slot, displayName, body.allergens);
@@ -237,6 +240,16 @@ app.post('/api/household/create', async (c) => {
     .run();
 
   const token = await signToken(c.env.JWT_SECRET, { householdId, partnerId, slot, displayName, inviteCode: code });
+  await logToD1(c.env.DB, {
+    householdId,
+    partnerId,
+    partnerSlot: slot,
+    partnerName: displayName,
+    actionType: 'household_created',
+    targetKind: 'household',
+    targetId: householdId,
+    targetName: displayName,
+  }).catch((err) => console.error('activity log failed:', err));
   return c.json({
     householdId,
     inviteCode: code,
@@ -290,6 +303,16 @@ app.post('/api/household/join', async (c) => {
   }
 
   const token = await signToken(c.env.JWT_SECRET, { householdId, partnerId, slot, displayName, inviteCode });
+  await logToD1(c.env.DB, {
+    householdId,
+    partnerId,
+    partnerSlot: slot,
+    partnerName: displayName,
+    actionType: 'partner_joined',
+    targetKind: 'household',
+    targetId: householdId,
+    targetName: displayName,
+  }).catch((err) => console.error('activity log failed:', err));
   return c.json({
     householdId,
     token,
@@ -353,6 +376,17 @@ app.post('/api/household/link', async (c) => {
     displayName: claims.displayName,
     inviteCode,
   });
+
+  await logToD1(c.env.DB, {
+    householdId: targetHouseholdId,
+    partnerId: newPartnerId,
+    partnerSlot: newSlot as 1 | 2,
+    partnerName: claims.displayName,
+    actionType: 'partner_linked',
+    targetKind: 'household',
+    targetId: targetHouseholdId,
+    targetName: claims.displayName,
+  }).catch((err) => console.error('activity log failed:', err));
 
   return c.json({
     householdId: targetHouseholdId,
@@ -786,6 +820,12 @@ app.delete('/api/household/:id/recipes/:recipeId', async (c) => {
   const denied = await requireAuth(c);
   if (denied) return denied;
   return handleDeleteRecipe(c);
+});
+
+app.get('/api/household/:id/activity', async (c) => {
+  const denied = await requireAuth(c);
+  if (denied) return denied;
+  return handleGetActivity(c);
 });
 
 app.get('/api/household/:id/ws', async (c) => {
