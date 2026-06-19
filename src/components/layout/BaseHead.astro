@@ -7,7 +7,7 @@ interface Props {
 }
 
 const { title, description, canonicalURL, ogImage } = Astro.props;
-const siteURL = 'https://cooktwo.app';
+const siteURL = 'https://cooktwo.com';
 const canonical = canonicalURL ? `${siteURL}${canonicalURL}` : Astro.url;
 const ogImg = ogImage || `${siteURL}/images/hero/og-homepage.webp`;
 ---
@@ -20,7 +20,7 @@ const ogImg = ogImage || `${siteURL}/images/hero/og-homepage.webp`;
 <meta name="description" content={description} />
 <meta name="keywords" content="couples meal planning, shared grocery list, adaptive cooking, meal planning for couples, pantry AI, CookTwo, collaborative nutrition, two plates" />
 <meta name="author" content="CookTwo" />
-<meta name="robots" content="noindex, nofollow" />
+<meta name="robots" content="index, follow" />
 
 <link rel="canonical" href={canonical} />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -48,7 +48,10 @@ const ogImg = ogImage || `${siteURL}/images/hero/og-homepage.webp`;
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="apple-mobile-web-app-title" content="CookTwo" />
 
-<meta name="googlebot" content="noindex, nofollow" />
+<meta name="googlebot" content="index, follow" />
 
 <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 <link rel="apple-touch-icon" href="/images/logo/logo-icon.png" />
+
+<!-- Cloudflare Web Analytics — beacon token replaced in Phase 4 with the real token from the CF Pages project settings -->
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "PLACEHOLDER_REPLACE_IN_PHASE_4"}'></script>
