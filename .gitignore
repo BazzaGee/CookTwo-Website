@@ -1,0 +1,44 @@
+# ── Secrets / environment (NEVER commit) ──────────────────────────
+.env
+.env.*
+!.env.example
+.dev.vars
+*.pem
+*.key
+
+# ── Dependencies ──────────────────────────────────────────────────
+node_modules/
+
+# ── Build output ──────────────────────────────────────────────────
+dist/
+.output/
+.astro/
+.vercel/
+.netlify/
+*.tsbuildinfo
+
+# ── Cloudflare / Wrangler ────────────────────────────────────────
+.wrangler/
+.dev.vars
+.mf/
+
+# ── Logs ─────────────────────────────────────────────────────────
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ── OS ───────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+nul
+
+# ── Editors ──────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+
+# ── Misc archives ────────────────────────────────────────────────
+*.zip
+*.tar.gz
