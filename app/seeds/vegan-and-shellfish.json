@@ -1,0 +1,50 @@
+{
+  "name": "vegan-and-shellfish",
+  "description": "Partner 1: vegan + shellfish allergy. Partner 2: omnivore, no restrictions.",
+  "partners": [
+    {
+      "id": "seed-p1",
+      "slot": 1,
+      "name": "Alex",
+      "diet": "vegan",
+      "allergens": ["shellfish", "crab", "shrimp"],
+      "body": {
+        "weightKg": 70,
+        "heightCm": 170,
+        "age": 30,
+        "gender": "female",
+        "activityLevel": "moderate",
+        "goal": "maintain"
+      },
+      "tdee": { "bmr": 1478, "tdee": 2291, "targetCalories": 2291 }
+    },
+    {
+      "id": "seed-p2",
+      "slot": 2,
+      "name": "Sam",
+      "diet": "omnivore",
+      "allergens": [],
+      "body": {
+        "weightKg": 82,
+        "heightCm": 180,
+        "age": 32,
+        "gender": "male",
+        "activityLevel": "active",
+        "goal": "gain"
+      },
+      "tdee": { "bmr": 1790, "tdee": 3088, "targetCalories": 3388 }
+    }
+  ],
+  "pantry": [
+    { "name": "tofu", "quantity": "400g", "category": "Produce" },
+    { "name": "brown rice", "quantity": "2 cups", "category": "Pantry" },
+    { "name": "spinach", "quantity": "1 bag", "category": "Produce" },
+    { "name": "coconut milk", "quantity": "1 can", "category": "Pantry" },
+    { "name": "olive oil", "quantity": "1 bottle", "category": "Pantry" },
+    { "name": "garlic", "quantity": "1 head", "category": "Produce" },
+    { "name": "onion", "quantity": "2", "category": "Produce" },
+    { "name": "ginger", "quantity": "1 piece", "category": "Produce" },
+    { "name": "curry paste", "quantity": "1 jar", "category": "Pantry" },
+    { "name": "quinoa", "quantity": "1 cup", "category": "Pantry" }
+  ]
+}

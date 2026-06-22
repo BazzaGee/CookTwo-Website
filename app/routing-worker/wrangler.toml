@@ -1,0 +1,16 @@
+name = "cooktwo-router"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+
+[vars]
+ASTRO_PAGES_URL = "https://cooktwo-site.pages.dev"
+PWA_PAGES_URL = "https://cooktwo-pwa.pages.dev"
+API_WORKER_URL = "https://couples-food-system-api.byte-digital.workers.dev"
+
+[env.production]
+name = "cooktwo-router"
+
+[env.production.vars]
+ASTRO_PAGES_URL = "https://cooktwo-site.pages.dev"
+PWA_PAGES_URL = "https://cooktwo-pwa.pages.dev"
+API_WORKER_URL = "https://couples-food-system-api.byte-digital.workers.dev"

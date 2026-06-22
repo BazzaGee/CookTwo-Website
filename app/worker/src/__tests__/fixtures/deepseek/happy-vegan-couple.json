@@ -1,0 +1,10 @@
+{
+  "model": "deepseek-v4-flash",
+  "choices": [
+    {
+      "message": {
+        "content": "{\n  \"message\": \"How about a Thai green curry with tofu? Quick, uses what you have, and works for both diets.\",\n  \"meal\": {\n    \"name\": \"Thai Green Curry with Tofu\",\n    \"description\": \"A quick and aromatic coconut-based curry with crispy tofu and vegetables\",\n    \"timeMinutes\": 25,\n    \"calories\": 420,\n    \"protein\": 22,\n    \"carbs\": 35,\n    \"fat\": 24,\n    \"ingredients\": [\n      {\"name\": \"tofu\", \"have\": true, \"quantity\": \"200g\"},\n      {\"name\": \"coconut milk\", \"have\": true, \"quantity\": \"1 can\"},\n      {\"name\": \"curry paste\", \"have\": true, \"quantity\": \"2 tbsp\"},\n      {\"name\": \"spinach\", \"have\": true, \"quantity\": \"1 cup\"},\n      {\"name\": \"lime\", \"have\": false, \"quantity\": \"1\"}\n    ],\n    \"steps\": [\"Press and cube tofu, then pan fry until golden\", \"Heat curry paste in coconut milk\", \"Add spinach and simmer\", \"Serve over rice with lime juice\"],\n    \"plating\": [\n      {\"partnerSlot\": 1, \"partnerName\": \"Alex\", \"targetCalories\": 2291, \"plate\": \"1 cup curry with tofu, 1/2 cup rice\", \"protein\": 22, \"carbs\": 35, \"fat\": 24},\n      {\"partnerSlot\": 2, \"partnerName\": \"Sam\", \"targetCalories\": 3388, \"plate\": \"1.5 cups curry with extra tofu, 1 cup rice\", \"protein\": 33, \"carbs\": 52, \"fat\": 36}\n    ]\n  },\n  \"actions\": {\n    \"addToList\": [\"lime\"]\n  }\n}"
+      }
+    }
+  ]
+}

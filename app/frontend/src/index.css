@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  body {
+    margin: 0;
+    height: 100%;
+    background-color: #faf6ee;
+    color: #2c3e2d;
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    overscroll-behavior: none;
+  }
+
+  #root {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  input,
+  button,
+  textarea,
+  select {
+    font: inherit;
+  }
+
+  button,
+  [role="button"],
+  a {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+@layer utilities {
+  .scroll-smooth-ios {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+  }
+
+  @keyframes brand-pulse {
+    0% { box-shadow: 0 0 0 0 rgba(122, 158, 126, 0.5); }
+    33% { box-shadow: 0 0 0 6px rgba(232, 168, 124, 0.4); }
+    66% { box-shadow: 0 0 0 3px rgba(122, 158, 126, 0.3); }
+    100% { box-shadow: 0 0 0 0 rgba(232, 168, 124, 0); }
+  }
+
+  .brand-pulse {
+    animation: brand-pulse 1.5s ease-out;
+  }
+}

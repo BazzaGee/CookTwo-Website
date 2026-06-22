@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  lint-and-typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: |
+            worker/package-lock.json
+            frontend/package-lock.json
+      - name: Install deps (worker)
+        run: npm ci
+        working-directory: worker
+      - name: Typecheck (worker)
+        run: npm run typecheck
+        working-directory: worker
+      - name: Install deps (frontend)
+        run: npm ci
+        working-directory: frontend
+      - name: Typecheck (frontend)
+        run: npm run typecheck
+        working-directory: frontend
+      - name: Lint (frontend)
+        run: npm run lint || true
+        working-directory: frontend
+
+  test-worker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: worker/package-lock.json
+      - name: Install deps
+        run: npm ci
+        working-directory: worker
+      - name: Run tests (worker)
+        run: npm test
+        working-directory: worker
+      - name: Coverage
+        run: npm run coverage || true
+        working-directory: worker
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-worker
+          path: worker/coverage/
+
+  test-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install deps
+        run: npm ci
+        working-directory: frontend
+      - name: Run tests (frontend)
+        run: npm test
+        working-directory: frontend
+      - name: Coverage
+        run: npm run coverage || true
+        working-directory: frontend
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-frontend
+          path: frontend/coverage/
