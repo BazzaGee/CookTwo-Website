@@ -1,0 +1,48 @@
+name: Deploy App Frontend (cooktwo.app)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'app/frontend/**'
+      - '.github/workflows/app-frontend.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-app-frontend
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/frontend/package-lock.json
+
+      - name: Install
+        run: npm ci
+        working-directory: app/frontend
+
+      - name: Build
+        run: npm run build
+        working-directory: app/frontend
+        env:
+          # Public values — the PWA calls the API worker directly.
+          VITE_API_URL: https://couples-food-system-api.byte-digital.workers.dev
+          VITE_WS_URL: wss://couples-food-system-api.byte-digital.workers.dev
+          VITE_VAPID_PUBLIC_KEY: BGvuzRtY6I_rrv2HXWdg9zFD2Tb8LlkywOScoPLlx9xb66b0wxa0YuNt1U3XaU-MrmC_4ZHWQS3Y9ye5RHsvix8
+
+      - name: Deploy to Cloudflare Pages
+        run: npx wrangler@latest pages deploy dist --project-name=cfs-app --branch=main
+        working-directory: app/frontend
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

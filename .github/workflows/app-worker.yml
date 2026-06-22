@@ -1,0 +1,46 @@
+name: Deploy App API Worker
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'app/worker/**'
+      - '.github/workflows/app-worker.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-app-worker
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/worker/package-lock.json
+
+      - name: Install
+        run: npm ci
+        working-directory: app/worker
+
+      - name: Typecheck
+        run: npm run typecheck
+        working-directory: app/worker
+
+      # Deploys the worker named `couples-food-system-api`.
+      # Runtime secrets (DEEPSEEK_KEY, ALIBABA_KEY, ZAI_KEY, JWT_SECRET, etc.)
+      # persist on the deployed worker — no need to re-set them here.
+      - name: Deploy Worker
+        run: npx wrangler@latest deploy
+        working-directory: app/worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
