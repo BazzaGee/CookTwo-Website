@@ -132,7 +132,7 @@ const welcomeMessage = Astro.props.welcomeMessage || "Kia ora! 👋 I'm the Cook
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
   }
-  .ct-chat-header-logo svg { width: 18px; height: 18px; color: #fff; }
+  .ct-chat-header-logo img { width: 100%; height: 100%; object-fit: contain; border-radius: 8px; display: block; }
   .ct-chat-header-text h3 {
     font-family: var(--ct-chat--font-family); font-size: 14px; font-weight: 700;
     color: var(--ct-chat--color-font); margin: 0; line-height: 1.2;
@@ -330,11 +330,7 @@ const welcomeMessage = Astro.props.welcomeMessage || "Kia ora! 👋 I'm the Cook
   <div class="ct-chat-overlay" id="ctChatOverlay">
     <div class="ct-chat-header">
       <div class="ct-chat-header-logo">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M3 2v7c0 1.1.9 2 2 2h2a2 2 0 0 0 2-2V2"/>
-          <path d="M7 2v20"/>
-          <path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/>
-        </svg>
+        <img src="/images/logo/logo-icon.png" alt="CookTwo" width="32" height="32" />
       </div>
       <div class="ct-chat-header-text">
         <h3>{chatTitle}</h3>

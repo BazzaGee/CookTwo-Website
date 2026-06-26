@@ -1,7 +1,7 @@
 ---
 import navigation from '../../data/navigation.json';
 import EarlyAccessButton from '../forms/EarlyAccessButton.astro';
-const { product, company } = navigation.navigation.footer;
+const { product, resources, company } = navigation.navigation.footer;
 const currentYear = new Date().getFullYear();
 ---
 
@@ -15,8 +15,8 @@ const currentYear = new Date().getFullYear();
       </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-      <div class="md:col-span-2">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+      <div class="md:col-span-1">
         <a href="/" class="font-semibold text-xl flex items-center gap-2 mb-4 tracking-tight text-text-primary">
           <img src="/images/logo/logo-icon.png" alt="CookTwo logo" class="w-6 h-6" decoding="async" />
           CookTwo
@@ -42,7 +42,17 @@ const currentYear = new Date().getFullYear();
             <li><a href={item.href} class="text-text-secondary hover:text-sage transition-colors">{item.label}</a></li>
           ))}
         </ul>
-        <h4 class="font-semibold mb-4 mt-8 text-lg text-text-primary">Company</h4>
+      </div>
+      <div>
+        <h4 class="font-semibold mb-4 text-lg text-text-primary">Resources</h4>
+        <ul class="space-y-3">
+          {resources.map((item) => (
+            <li><a href={item.href} class="text-text-secondary hover:text-sage transition-colors">{item.label}</a></li>
+          ))}
+        </ul>
+      </div>
+      <div>
+        <h4 class="font-semibold mb-4 text-lg text-text-primary">Company</h4>
         <ul class="space-y-3">
           {company.map((item) => (
             <li><a href={item.href} class="text-text-secondary hover:text-sage transition-colors">{item.label}</a></li>

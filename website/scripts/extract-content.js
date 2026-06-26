@@ -122,6 +122,77 @@ const pages = pageFiles
   .filter((f) => !f.includes(`${join('src', 'pages', '404.astro')}`))
   .map((f) => extractAstroPage(f));
 
+function parseFrontmatter(content) {
+  const match = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
+  if (!match) return { data: {}, body: content };
+  const data = {};
+  const yaml = match[1];
+  const lines = yaml.split('\n');
+  let currentKey = null;
+  let currentArray = null;
+  for (const line of lines) {
+    const arrayItem = line.match(/^\s*-\s+(.*)$/);
+    if (arrayItem && currentArray) {
+      currentArray.push(arrayItem[1].replace(/^['"]|['"]$/g, '').trim());
+      continue;
+    }
+    const kv = line.match(/^([a-zA-Z_][a-zA-Z0-9_]*):\s*(.*)$/);
+    if (kv) {
+      const key = kv[1];
+      let val = kv[2].trim();
+      if (val === '') {
+        currentArray = [];
+        data[key] = currentArray;
+        currentKey = key;
+        continue;
+      }
+      if (/^['"].*['"]$/.test(val)) val = val.slice(1, -1);
+      if (val === 'true') val = true;
+      else if (val === 'false') val = false;
+      else if (/^\d{4}-\d{2}-\d{2}/.test(val)) val = val;
+      data[key] = val;
+      currentKey = null;
+      currentArray = null;
+    }
+  }
+  return { data, body: match[2] };
+}
+
+function extractContentFile(filePath, type) {
+  const content = readFileSync(filePath, 'utf-8');
+  const { data, body } = parseFrontmatter(content);
+  const rel = filePath.split(join(rootDir, 'src', 'content'))[1].replace(/\\/g, '/').replace(/^\//, '');
+  const slug = rel.replace(/\.(md|mdx)$/, '').replace(/\/index$/, '');
+  const text = body
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\{[^}]*\}/g, ' ')
+    .replace(/import\s+.*?from\s+['"][^'"]*['"];?\n?/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return {
+    type,
+    slug,
+    title: data.title || slug,
+    description: data.description || '',
+    pubDate: data.pubDate || null,
+    pillar: data.pillar || null,
+    seoMode: data.seoMode || null,
+    targetKeyword: data.targetKeyword || null,
+    tags: data.tags || [],
+    draft: data.draft === true,
+    content: text.substring(0, 5000)
+  };
+}
+
+const blogFiles = getAllFiles(join(rootDir, 'src', 'content', 'blog'), ['.md', '.mdx']);
+const pageContentFiles = getAllFiles(join(rootDir, 'src', 'content', 'pages'), ['.md', '.mdx']);
+const blogPosts = blogFiles.map((f) => extractContentFile(f, 'post'));
+const pillarPages = pageContentFiles.map((f) => extractContentFile(f, 'page'));
+
 const whatIs = faq.find((q) => /what is cooktwo/i.test(q.question));
 const business = {
   name: 'CookTwo',
@@ -139,6 +210,8 @@ const siteContent = {
   steps,
   comparison,
   pages,
+  blogPosts,
+  pillarPages,
   navigation: navigationRaw.navigation || {},
   generatedAt: new Date().toISOString(),
 };
@@ -156,4 +229,6 @@ console.log(`  Features: ${features.length}`);
 console.log(`  Onboarding steps: ${steps.length}`);
 console.log(`  Competitors compared: ${comparison.competitors.length}`);
 console.log(`  Pages: ${pages.length}`);
+console.log(`  Blog posts: ${blogPosts.length}`);
+console.log(`  Pillar pages: ${pillarPages.length}`);
 console.log('Done!');

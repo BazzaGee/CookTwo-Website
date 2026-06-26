@@ -1,0 +1,33 @@
+---
+interface TocItem {
+  title: string;
+  slug: string;
+  level?: 2 | 3;
+}
+
+interface Props {
+  items: TocItem[];
+  title?: string;
+}
+
+const { items, title = 'In this guide' } = Astro.props;
+---
+
+<nav class="not-prose my-10 bg-white border border-border rounded-2xl p-6 shadow-sm" aria-label={title}>
+  <p class="text-xs font-semibold uppercase tracking-wider text-text-secondary mb-4">{title}</p>
+  <ul class="space-y-2.5">
+    {items.map((item) => (
+      <li class={item.level === 3 ? 'pl-4' : ''}>
+        <a
+          href={`#${item.slug}`}
+          class="text-text-primary hover:text-sage transition-colors flex items-baseline gap-2 leading-snug"
+        >
+          <span class={`flex-shrink-0 text-xs font-semibold ${item.level === 3 ? 'text-text-secondary' : 'text-sage'}`}>
+            {item.level === 3 ? '—' : '▸'}
+          </span>
+          <span class={item.level === 3 ? 'text-sm' : 'text-base font-medium'}>{item.title}</span>
+        </a>
+      </li>
+    ))}
+  </ul>
+</nav>

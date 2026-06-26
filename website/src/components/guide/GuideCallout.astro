@@ -1,0 +1,14 @@
+---
+import Callout from '../prose/Callout.astro';
+
+interface Props {
+  variant?: 'info' | 'tip' | 'warning' | 'quote';
+  title?: string;
+}
+
+const { variant = 'tip', title = 'Try this in the app' } = Astro.props;
+---
+
+<Callout variant={variant} title={title}>
+  <slot />
+</Callout>

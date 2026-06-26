@@ -1,0 +1,30 @@
+---
+interface Props {
+  variant?: 'info' | 'tip' | 'warning' | 'quote';
+  title?: string;
+}
+
+const { variant = 'info', title } = Astro.props;
+
+const styles = {
+  info: 'border-sage/40 bg-sage/5 text-text-primary',
+  tip: 'border-terracotta/40 bg-terracotta/5 text-text-primary',
+  warning: 'border-error/40 bg-error/5 text-text-primary',
+  quote: 'border-border bg-cream-dark text-text-secondary'
+};
+
+const labels = {
+  info: 'Heads up',
+  tip: 'Try this',
+  warning: 'Worth knowing',
+  quote: 'Note'
+};
+---
+
+<aside class:list={["not-prose my-8 rounded-2xl border-l-4 p-6", styles[variant]]}>
+  {title && <p class="text-xs font-semibold uppercase tracking-wider mb-2 text-text-secondary">{title}</p>}
+  {!title && variant !== 'quote' && <p class="text-xs font-semibold uppercase tracking-wider mb-2 text-text-secondary">{labels[variant]}</p>}
+  <div class="prose prose-base max-w-none prose-p:my-1 prose-p:leading-relaxed">
+    <slot />
+  </div>
+</aside>

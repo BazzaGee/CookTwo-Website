@@ -1,0 +1,115 @@
+---
+interface Marker {
+  /** Number label (string so "1", "2", "10" all work) */
+  label: string;
+  /** X position of the marker chip, in % of image width (0–100) */
+  x: number;
+  /** Y position of the marker chip, in % of image height (0–100) */
+  y: number;
+  /** Optional target point (in % of image) the arrow points to. If omitted, the chip is placed without an arrow. */
+  tx?: number;
+  ty?: number;
+  /** Optional side the chip should sit on for label overflow. */
+  side?: 'left' | 'right';
+  /** Optional short text note displayed next to the chip */
+  note?: string;
+}
+
+interface Props {
+  src: string;
+  alt: string;
+  markers?: Marker[];
+  caption?: string;
+  /** Aspect ratio of the screenshot — defaults to 9/19.5 (phone) */
+  aspect?: string;
+  /** Width class — defaults to max-w-xs (320px) */
+  size?: 'sm' | 'md' | 'lg';
+}
+
+const { src, alt, markers = [], caption, aspect = '9 / 19.5', size = 'sm' } = Astro.props;
+
+const sizeClass = {
+  sm: 'max-w-[280px]',
+  md: 'max-w-[340px]',
+  lg: 'max-w-[420px]',
+}[size];
+
+const markerId = `markers-${Math.random().toString(36).slice(2, 9)}`;
+---
+
+<figure class="not-prose my-10 flex flex-col items-center">
+  <div class={`relative ${sizeClass} w-full`} style={`aspect-ratio: ${aspect};`}>
+    <img
+      src={src}
+      alt={alt}
+      loading="lazy"
+      decoding="async"
+      class="absolute inset-0 w-full h-full object-cover rounded-[2rem] shadow-xl"
+    />
+    {markers.length > 0 && (
+      <svg
+        class="absolute inset-0 w-full h-full pointer-events-none"
+        viewBox="0 0 100 100"
+        preserveAspectRatio="none"
+        aria-hidden="true"
+      >
+        <defs>
+          <marker
+            id={`arrow-${markerId}`}
+            viewBox="0 0 10 10"
+            refX="8"
+            refY="5"
+            markerWidth="5"
+            markerHeight="5"
+            orient="auto-start-reverse"
+          >
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#E07A5F" />
+          </marker>
+        </defs>
+        {markers.map((m) => {
+          if (m.tx == null || m.ty == null) return null;
+          const mx = 100 - m.x;
+          const my = m.y;
+          const tx = 100 - (m.tx ?? m.x);
+          const ty = m.ty ?? m.y;
+          // Control point: midpoint pushed perpendicular to the line for a gentle curve
+          const midX = (mx + tx) / 2;
+          const midY = (my + ty) / 2;
+          const dx = tx - mx;
+          const dy = ty - my;
+          const len = Math.sqrt(dx * dx + dy * dy) || 1;
+          const px = -dy / len;
+          const py = dx / len;
+          const curve = Math.min(8, len * 0.25);
+          const cpx = midX + px * curve;
+          const cpy = midY + py * curve;
+          return (
+            <path
+              d={`M ${mx} ${my} Q ${cpx} ${cpy} ${tx} ${ty}`}
+              fill="none"
+              stroke="#E07A5F"
+              stroke-width="0.45"
+              stroke-linecap="round"
+              marker-end={`url(#arrow-${markerId})`}
+              opacity="0.95"
+            />
+          );
+        })}
+      </svg>
+    )}
+    {markers.map((m) => (
+      <span
+        class="absolute z-10 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center w-7 h-7 rounded-full bg-terracotta text-white text-xs font-bold shadow-lg ring-2 ring-white"
+        style={`left: ${100 - m.x}%; top: ${m.y}%;`}
+        aria-label={`Marker ${m.label}`}
+      >
+        {m.label}
+      </span>
+    ))}
+  </div>
+  {caption && (
+    <figcaption class="mt-3 text-sm text-text-secondary text-center max-w-md italic">
+      {caption}
+    </figcaption>
+  )}
+</figure>

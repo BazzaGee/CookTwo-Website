@@ -1,0 +1,68 @@
+---
+interface Props {
+  defaultWeeklySpend?: number;
+  defaultWasteFactor?: number;
+}
+const { defaultWeeklySpend = 140, defaultWasteFactor = 18 } = Astro.props;
+---
+
+<div class="not-prose my-10 bg-white border border-border rounded-2xl p-6 md:p-8 shadow-sm" data-budget-estimator>
+  <div class="flex items-center gap-2 mb-1">
+    <span class="badge-live">Interactive</span>
+    <span class="text-xs text-text-secondary">Runs in your browser</span>
+  </div>
+  <h3 class="text-2xl font-bold text-text-primary mt-3 mb-1">Couples grocery budget estimator</h3>
+  <p class="text-text-secondary mb-6">Plug in your numbers — the estimate updates as you type.</p>
+
+  <div class="grid sm:grid-cols-2 gap-4 mb-6">
+    <div>
+      <label class="block text-sm font-medium text-text-primary mb-2" for="bg-spend">Weekly grocery spend (USD)</label>
+      <input id="bg-spend" data-field="weeklySpend" type="number" min="20" max="600" step="5" value={defaultWeeklySpend} class="input-field" />
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-text-primary mb-2" for="bg-waste">Food waste / duplicates (%)</label>
+      <input id="bg-waste" data-field="wasteFactor" type="number" min="0" max="60" step="1" value={defaultWasteFactor} class="input-field" />
+    </div>
+  </div>
+
+  <div class="grid sm:grid-cols-3 gap-4">
+    <div class="stat-card">
+      <p class="stat-number" data-output="yearlyWaste">$1,310</p>
+      <p class="stat-label">Wasted / duplicated per year</p>
+    </div>
+    <div class="stat-card">
+      <p class="stat-number" data-output="yearlySave">$655</p>
+      <p class="stat-label">Realistic yearly savings</p>
+    </div>
+    <div class="stat-card">
+      <p class="stat-number" data-output="monthlySave">$55</p>
+      <p class="stat-label">Saved per month</p>
+    </div>
+  </div>
+
+  <p class="text-xs text-text-secondary mt-4">Estimate assumes a shared pantry with a single source of truth and a meal plan that plans around what you already have. Actual results vary by household.</p>
+</div>
+
+<script>
+  function fmt(n: number) {
+    return '$' + Math.round(n).toLocaleString('en-US');
+  }
+
+  function recompute(root: HTMLElement) {
+    const spend = Number((root.querySelector('[data-field="weeklySpend"]') as HTMLInputElement).value) || 0;
+    const waste = Math.min(60, Math.max(0, Number((root.querySelector('[data-field="wasteFactor"]') as HTMLInputElement).value) || 0));
+    const yearly = spend * 52;
+    const wasted = yearly * (waste / 100);
+    const save = wasted * 0.5;
+    root.querySelector('[data-output="yearlyWaste"]')!.textContent = fmt(wasted);
+    root.querySelector('[data-output="yearlySave"]')!.textContent = fmt(save);
+    root.querySelector('[data-output="monthlySave"]')!.textContent = fmt(save / 12);
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-budget-estimator]').forEach((root) => {
+    root.querySelectorAll<HTMLInputElement>('[data-field]').forEach((el) => {
+      el.addEventListener('input', () => recompute(root));
+    });
+    recompute(root);
+  });
+</script>

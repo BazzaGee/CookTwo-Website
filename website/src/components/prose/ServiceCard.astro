@@ -1,0 +1,37 @@
+---
+interface Props {
+  title: string;
+  description?: string;
+  href?: string;
+  ctaLabel?: string;
+  variant?: 'default' | 'sage' | 'terracotta';
+}
+
+const { title, description, href, ctaLabel = 'Learn more', variant = 'default' } = Astro.props;
+
+const accent = {
+  default: 'border-border hover:border-sage',
+  sage: 'border-sage/40 bg-sage/5 hover:border-sage hover:bg-sage/10',
+  terracotta: 'border-terracotta/40 bg-terracotta/5 hover:border-terracotta hover:bg-terracotta/10'
+};
+
+const ctaColor = {
+  default: 'text-sage',
+  sage: 'text-sage-dark',
+  terracotta: 'text-terracotta-dark'
+};
+---
+
+<div class:list={["not-prose my-8 card group cursor-default", accent[variant]]}>
+  <h3 class="text-xl font-semibold text-text-primary mb-2">{title}</h3>
+  {description && <p class="text-text-secondary leading-relaxed mb-4">{description}</p>}
+  {href && (
+    <a href={href} class:list={["inline-flex items-center gap-1 font-medium group-hover:gap-2 transition-all", ctaColor[variant]]}>
+      {ctaLabel}
+      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+        <polyline points="12 5 19 12 12 19"></polyline>
+      </svg>
+    </a>
+  )}
+</div>

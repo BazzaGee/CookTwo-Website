@@ -1,0 +1,122 @@
+---
+interface Props {
+  dishName?: string;
+  partnerALabel?: string;
+  partnerBLabel?: string;
+}
+const { dishName = 'your shared meal', partnerALabel = 'Partner A', partnerBLabel = 'Partner B' } = Astro.props;
+---
+
+<div class="not-prose my-10 bg-white border border-border rounded-2xl p-6 md:p-8 shadow-sm" data-portion-calculator data-dish={dishName}>
+  <div class="flex items-center gap-2 mb-1">
+    <span class="badge-live">Interactive</span>
+    <span class="text-xs text-text-secondary">Runs in your browser</span>
+  </div>
+  <h3 class="text-2xl font-bold text-text-primary mt-3 mb-1">Portion-split calculator</h3>
+  <p class="text-text-secondary mb-6">See how the same pan of <span class="font-medium text-text-primary" data-dish-label>{dishName}</span> plates two different goals. Drag the sliders — the rest of the page stays the same, only what's on each plate changes.</p>
+
+  <div class="grid md:grid-cols-2 gap-6 mb-6">
+    <div class="bg-cream-dark rounded-xl p-5">
+      <label class="block text-sm font-medium text-text-primary mb-2" for="pca-target">{partnerALabel} — calories per plate</label>
+      <input id="pca-target" data-role="partnerA" data-field="calories" type="range" min="300" max="900" step="10" value="450" class="w-full accent-sage" />
+      <div class="flex items-baseline justify-between mt-1 text-sm">
+        <span class="text-text-secondary">300</span>
+        <span class="font-semibold text-sage-dark"><span data-output="partnerA-calories">450</span> kcal</span>
+        <span class="text-text-secondary">900</span>
+      </div>
+
+      <label class="block text-sm font-medium text-text-primary mb-2 mt-4" for="pca-goal">{partnerALabel} — goal</label>
+      <select id="pca-goal" data-role="partnerA" data-field="goal" class="input-field">
+        <option value="cut" selected>Cutting / fat loss</option>
+        <option value="maintain">Maintaining</option>
+        <option value="lean-bulk">Lean bulk</option>
+        <option value="bulk">Bulk</option>
+      </select>
+
+      <div class="mt-4 text-sm text-text-secondary">Protein <span class="font-semibold text-text-primary" data-output="partnerA-protein">38</span>g · Carbs <span class="font-semibold text-text-primary" data-output="partnerA-carbs">42</span>g · Fat <span class="font-semibold text-text-primary" data-output="partnerA-fat">14</span>g</div>
+    </div>
+
+    <div class="bg-cream-dark rounded-xl p-5">
+      <label class="block text-sm font-medium text-text-primary mb-2" for="pcb-target">{partnerBLabel} — calories per plate</label>
+      <input id="pcb-target" data-role="partnerB" data-field="calories" type="range" min="300" max="1200" step="10" value="700" class="w-full accent-terracotta" />
+      <div class="flex items-baseline justify-between mt-1 text-sm">
+        <span class="text-text-secondary">300</span>
+        <span class="font-semibold text-terracotta-dark"><span data-output="partnerB-calories">700</span> kcal</span>
+        <span class="text-text-secondary">1200</span>
+      </div>
+
+      <label class="block text-sm font-medium text-text-primary mb-2 mt-4" for="pcb-goal">{partnerBLabel} — goal</label>
+      <select id="pcb-goal" data-role="partnerB" data-field="goal" class="input-field">
+        <option value="cut">Cutting / fat loss</option>
+        <option value="maintain">Maintaining</option>
+        <option value="lean-bulk" selected>Lean bulk</option>
+        <option value="bulk">Bulk</option>
+      </select>
+
+      <div class="mt-4 text-sm text-text-secondary">Protein <span class="font-semibold text-text-primary" data-output="partnerB-protein">52</span>g · Carbs <span class="font-semibold text-text-primary" data-output="partnerB-carbs">78</span>g · Fat <span class="font-semibold text-text-primary" data-output="partnerB-fat">18</span>g</div>
+    </div>
+  </div>
+
+  <div class="bg-sage/5 border border-sage/30 rounded-xl p-5">
+    <p class="text-sm font-medium text-sage-dark mb-2">What this looks like on the plate</p>
+    <p class="text-text-primary leading-relaxed" data-output="summary">A 450 kcal plate keeps things lean: smaller portion of protein, extra greens, half a cup of rice. A 700 kcal plate loads up: full portion of protein, full cup of rice, slightly more cooking fat. Same pan, same timing — just plated differently at the end.</p>
+  </div>
+
+  <p class="text-xs text-text-secondary mt-4">These numbers are illustrative guidance, not medical or dietary advice. Tune to your own targets.</p>
+</div>
+
+<script>
+  const goalProfiles: Record<string, { proteinPct: number; carbsPct: number; fatPct: number }> = {
+    'cut':       { proteinPct: 0.35, carbsPct: 0.35, fatPct: 0.30 },
+    'maintain':  { proteinPct: 0.28, carbsPct: 0.44, fatPct: 0.28 },
+    'lean-bulk': { proteinPct: 0.30, carbsPct: 0.45, fatPct: 0.25 },
+    'bulk':      { proteinPct: 0.25, carbsPct: 0.50, fatPct: 0.25 }
+  };
+
+  function recompute(root: HTMLElement) {
+    const state = { partnerA: { calories: 450, goal: 'cut' }, partnerB: { calories: 700, goal: 'lean-bulk' } };
+    root.querySelectorAll<HTMLInputElement | HTMLSelectElement>('[data-role]').forEach((el) => {
+      const role = (el as HTMLElement).dataset.role!;
+      const field = (el as HTMLElement).dataset.field!;
+      if (el instanceof HTMLInputElement && el.type === 'range') state[role as 'partnerA' | 'partnerB'].calories = Number(el.value);
+      else if (el instanceof HTMLSelectElement) state[role as 'partnerA' | 'partnerB'].goal = el.value;
+    });
+
+    const dish = (root.dataset.dish || 'your shared meal').toString();
+
+    for (const role of ['partnerA', 'partnerB'] as const) {
+      const cal = state[role].calories;
+      const profile = goalProfiles[state[role].goal] || goalProfiles['maintain'];
+      const proteinG = Math.round((cal * profile.proteinPct) / 4);
+      const carbsG = Math.round((cal * profile.carbsPct) / 4);
+      const fatG = Math.round((cal * profile.fatPct) / 9);
+      root.querySelector<HTMLElement>(`[data-output="${role}-calories"]`)!.textContent = String(cal);
+      root.querySelector<HTMLElement>(`[data-output="${role}-protein"]`)!.textContent = String(proteinG);
+      root.querySelector<HTMLElement>(`[data-output="${role}-carbs"]`)!.textContent = String(carbsG);
+      root.querySelector<HTMLElement>(`[data-output="${role}-fat"]`)!.textContent = String(fatG);
+    }
+
+    const a = state.partnerA, b = state.partnerB;
+    const summary = root.querySelector<HTMLElement>('[data-output="summary"]')!;
+    if (Math.abs(a.calories - b.calories) < 30) {
+      summary.textContent = `Both plates land near ${Math.round((a.calories + b.calories) / 2)} kcal — same portion, plate it however you like.`;
+    } else {
+      const lo = a.calories < b.calories ? a : b, hi = a.calories < b.calories ? b : a;
+      const loRole = a.calories < b.calories ? 'partnerA' : 'partnerB';
+      const diff = Math.round(((hi.calories - lo.calories) / lo.calories) * 100);
+      summary.textContent = `A ${lo.calories} kcal plate keeps things light${loRole === 'partnerB' ? ' (Partner B)' : ''}: smaller protein portion, extra greens${lo.goal === 'cut' ? ', less rice' : ''}. A ${hi.calories} kcal plate${hiRole(loRole)} loads up: full protein, full carbs${hi.goal.includes('bulk') ? ', a drizzle more cooking fat' : ''}. That's a ${diff}% difference in volume — same pan, same timing, just plated differently.`;
+    }
+  }
+
+  function hiRole(loRole: string) {
+    return loRole === 'partnerA' ? ' (Partner A)' : ' (Partner B)';
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-portion-calculator]').forEach((root) => {
+    root.querySelectorAll<HTMLInputElement | HTMLSelectElement>('[data-role]').forEach((el) => {
+      el.addEventListener('input', () => recompute(root));
+      el.addEventListener('change', () => recompute(root));
+    });
+    recompute(root);
+  });
+</script>

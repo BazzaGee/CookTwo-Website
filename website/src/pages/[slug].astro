@@ -1,0 +1,31 @@
+---
+import { getCollection } from 'astro:content';
+import PageLayout from '../layouts/PageLayout.astro';
+
+export async function getStaticPaths() {
+  const pages = await getCollection('pages', ({ data }) => data.draft !== true);
+  return pages
+    .filter((page) => page.id !== 'app-guide')
+    .map((page) => ({
+      params: { slug: page.id },
+      props: { page }
+    }));
+}
+
+const { page } = Astro.props;
+const { Content } = await page.render();
+---
+
+<PageLayout
+  title={page.data.title}
+  description={page.data.description}
+  pubDate={page.data.pubDate}
+  updatedDate={page.data.updatedDate}
+  author={page.data.author}
+  ogImage={page.data.ogImage}
+  pillar={page.data.pillar}
+  pageType="pillar"
+  tags={page.data.tags}
+>
+  <Content />
+</PageLayout>

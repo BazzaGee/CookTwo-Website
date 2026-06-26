@@ -23,6 +23,10 @@
         { "label": "How It Works", "href": "/how-it-works" },
         { "label": "Compare", "href": "/compare" }
       ],
+      "resources": [
+        { "label": "App Guide", "href": "/app-guide" },
+        { "label": "Blog", "href": "/blog" }
+      ],
       "company": [
         { "label": "About Us", "href": "/about" },
         { "label": "FAQ", "href": "/faq" },
