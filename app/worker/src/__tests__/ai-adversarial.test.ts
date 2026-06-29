@@ -9,7 +9,6 @@ const testEnv = {
   DEEPSEEK_KEY: 'test-key',
   ALIBABA_KEY: '',
   ZAI_KEY: '',
-  OPENROUTER_KEY: '',
   DB: null as unknown as D1Database,
   DIET_RESEARCH: null as unknown as R2Bucket,
   HOUSEHOLD_SYNC: null as unknown as DurableObjectNamespace,

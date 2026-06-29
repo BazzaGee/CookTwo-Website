@@ -1,16 +1,12 @@
 import type { Env } from '../env';
 
 export const QUOTAS = { free: 10, premium: 70 } as const;
-export const IMAGE_QUOTAS = { free: 0, premium: 3 } as const;
 
 export interface UsageState {
   tier: 'free' | 'premium';
   usedToday: number;
   dailyQuota: number;
-  imagesUsedToday: number;
-  dailyImageQuota: number;
   remaining: number;
-  imagesRemaining: number;
   resetsAt: string;
   planPeriod: 'monthly' | 'yearly' | null;
   currentPeriodEnd: number | null;
@@ -62,9 +58,7 @@ async function getOrInitSubscription(
 ): Promise<{
   tier: string;
   daily_quota: number;
-  daily_image_quota: number;
   used_today: number;
-  images_used_today: number;
   last_reset_date: string | null;
   timezone: string;
   plan_period: string | null;
@@ -76,9 +70,7 @@ async function getOrInitSubscription(
     .first<{
       tier: string;
       daily_quota: number;
-      daily_image_quota: number;
       used_today: number;
-      images_used_today: number;
       last_reset_date: string | null;
       timezone: string;
       plan_period: string | null;
@@ -91,8 +83,8 @@ async function getOrInitSubscription(
   const now = Date.now();
   const tz = timezone || 'UTC';
   await db.prepare(
-    `INSERT INTO household_subscriptions (household_id, tier, timezone, daily_quota, daily_image_quota, created_at, updated_at)
-     VALUES (?, 'free', ?, 10, 0, ?, ?)`,
+    `INSERT INTO household_subscriptions (household_id, tier, timezone, daily_quota, created_at, updated_at)
+     VALUES (?, 'free', ?, 10, ?, ?)`,
   )
     .bind(householdId, tz, now, now)
     .run();
@@ -100,9 +92,7 @@ async function getOrInitSubscription(
   return {
     tier: 'free',
     daily_quota: 10,
-    daily_image_quota: 0,
     used_today: 0,
-    images_used_today: 0,
     last_reset_date: null,
     timezone: tz,
     plan_period: null,
@@ -124,7 +114,6 @@ async function maybeRolloverDay(
   await db.prepare(
     `UPDATE household_subscriptions
         SET used_today = 0,
-            images_used_today = 0,
             last_reset_date = ?,
             timezone = ?,
             updated_at = ?
@@ -159,29 +148,6 @@ export async function tryReserveAI(
   return result.meta.changes > 0;
 }
 
-export async function tryReserveImage(
-  db: D1Database,
-  householdId: string,
-  tz: string,
-): Promise<boolean> {
-  await maybeRolloverDay(db, householdId, tz);
-  const today = todayLocalIn(tz);
-
-  const result = await db.prepare(
-    `UPDATE household_subscriptions
-        SET images_used_today = images_used_today + 1,
-            updated_at = ?
-      WHERE household_id = ?
-        AND images_used_today < daily_image_quota
-        AND tier = 'premium'
-        AND (last_reset_date = ? OR last_reset_date IS NULL)`,
-  )
-    .bind(Date.now(), householdId, today)
-    .run();
-
-  return result.meta.changes > 0;
-}
-
 export async function refundAI(
   db: D1Database,
   householdId: string,
@@ -194,20 +160,6 @@ export async function refundAI(
       WHERE household_id = ?`,
   )
     .bind(cost, Date.now(), householdId)
-    .run();
-}
-
-export async function refundImage(
-  db: D1Database,
-  householdId: string,
-): Promise<void> {
-  await db.prepare(
-    `UPDATE household_subscriptions
-        SET images_used_today = MAX(0, images_used_today - 1),
-            updated_at = ?
-      WHERE household_id = ?`,
-  )
-    .bind(Date.now(), householdId)
     .run();
 }
 
@@ -226,10 +178,7 @@ export async function getUsageState(
     tier: sub.tier as 'free' | 'premium',
     usedToday: sub.used_today,
     dailyQuota: sub.daily_quota,
-    imagesUsedToday: sub.images_used_today,
-    dailyImageQuota: sub.daily_image_quota,
     remaining: sub.daily_quota - sub.used_today,
-    imagesRemaining: sub.daily_image_quota - sub.images_used_today,
     resetsAt,
     planPeriod: sub.plan_period as 'monthly' | 'yearly' | null,
     currentPeriodEnd: sub.current_period_end,
@@ -263,34 +212,6 @@ export async function withQuotaAI<T>(
     return { result };
   } catch (err) {
     await refundAI(db, householdId, cost);
-    throw err;
-  }
-}
-
-export async function withQuotaImage<T>(
-  db: D1Database,
-  householdId: string,
-  tz: string,
-  fn: () => Promise<T>,
-): Promise<
-  { result: T }
-  | { error: 'premium_only' }
-  | { error: 'image_quota_exceeded'; usedToday: number; dailyQuota: number }
-> {
-  const tier = await checkPremiumGate(db, householdId);
-  if (tier !== 'premium') return { error: 'premium_only' };
-
-  const reserved = await tryReserveImage(db, householdId, tz);
-  if (!reserved) {
-    const state = await getUsageState(db, householdId, tz);
-    return { error: 'image_quota_exceeded', usedToday: state.imagesUsedToday + 1, dailyQuota: state.dailyImageQuota };
-  }
-
-  try {
-    const result = await fn();
-    return { result };
-  } catch (err) {
-    await refundImage(db, householdId);
     throw err;
   }
 }

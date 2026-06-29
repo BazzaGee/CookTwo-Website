@@ -186,16 +186,14 @@ export async function applyWebhookEvent(
       await db.prepare(
         `INSERT INTO household_subscriptions
             (household_id, tier, plan_period, timezone, last_reset_date,
-             used_today, daily_quota, images_used_today, daily_image_quota,
+             used_today, daily_quota,
              stripe_customer_id, stripe_subscription_id, current_period_end,
              cancel_at_period_end, status, created_at, updated_at)
-         VALUES (?, 'premium', ?, 'UTC', NULL, 0, 70, 0, 3, ?, ?, ?, 0, 'active', ?, ?)
+         VALUES (?, 'premium', ?, 'UTC', NULL, 0, 70, ?, ?, ?, 0, 'active', ?, ?)
          ON CONFLICT(household_id) DO UPDATE SET
              tier = 'premium',
              daily_quota = 70,
-             daily_image_quota = 3,
              used_today = 0,
-             images_used_today = 0,
              stripe_customer_id = excluded.stripe_customer_id,
              stripe_subscription_id = excluded.stripe_subscription_id,
              plan_period = excluded.plan_period,
@@ -237,7 +235,6 @@ export async function applyWebhookEvent(
         `UPDATE household_subscriptions
             SET tier = 'free',
                 daily_quota = 10,
-                daily_image_quota = 0,
                 stripe_subscription_id = NULL,
                 status = 'canceled',
                 updated_at = ?

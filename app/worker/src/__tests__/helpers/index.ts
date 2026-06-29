@@ -92,15 +92,6 @@ export function createTestD1(): D1Database {
       added_at INTEGER NOT NULL,
       PRIMARY KEY (partner_id, allergen)
     );
-    CREATE TABLE IF NOT EXISTS meal_plans (
-      id TEXT PRIMARY KEY,
-      household_id TEXT NOT NULL REFERENCES households(id),
-      day_of_week TEXT NOT NULL,
-      meal_type TEXT NOT NULL DEFAULT 'dinner',
-      meal_name TEXT NOT NULL,
-      meal_data TEXT NOT NULL,
-      created_at INTEGER NOT NULL
-    );
     CREATE TABLE IF NOT EXISTS recipes (
       id TEXT PRIMARY KEY,
       household_id TEXT NOT NULL REFERENCES households(id),

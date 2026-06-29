@@ -16,8 +16,9 @@ export interface PartnerProfile {
   name: string;
   diet: Diet;
   fastingMode: string | null;
-  allergies: string;          // kept for backward compat, deprecated
-  allergens: string[];         // structured list from partner_allergens table
+  allergies: string;
+  allergens: string[];
+  bodyProfileVisible: boolean;
   createdAt: number;
   updatedAt: number;
   weightKg: number | null;
@@ -37,6 +38,7 @@ interface PartnerRow {
   diet: string;
   fasting_mode: string | null;
   allergies: string;
+  body_profile_visible: number;
   created_at: number;
   updated_at: number;
   weight_kg: number | null;
@@ -66,6 +68,7 @@ function rowToProfile(row: PartnerRow): PartnerProfile {
     fastingMode: row.fasting_mode ?? null,
     allergies: row.allergies,
     allergens: [],
+    bodyProfileVisible: row.body_profile_visible === 1,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     weightKg: row.weight_kg,
@@ -128,6 +131,7 @@ export async function createPartner(
     fastingMode: null,
     allergies: (allergens ?? []).join(', '),
     allergens: allergens ?? [],
+    bodyProfileVisible: false,
     createdAt: now,
     updatedAt: now,
     weightKg: null,
@@ -180,6 +184,7 @@ export async function updatePartner(
     name?: string; diet?: string; fastingMode?: string | null; allergies?: string; allergens?: string[];
     weightKg?: number | null; heightCm?: number | null; age?: number | null;
     gender?: string | null; activityLevel?: string | null; goal?: string | null;
+    bodyProfileVisible?: boolean;
   },
 ): Promise<PartnerProfile | null> {
   const now = Date.now();
@@ -201,11 +206,12 @@ export async function updatePartner(
   const gender = updates.gender !== undefined ? updates.gender : existing.gender;
   const activityLevel = updates.activityLevel !== undefined ? updates.activityLevel : existing.activity_level;
   const goal = updates.goal !== undefined ? updates.goal : existing.goal;
+  const bodyProfileVisible = updates.bodyProfileVisible !== undefined ? (updates.bodyProfileVisible ? 1 : 0) : existing.body_profile_visible;
 
   await db.prepare(
-    `UPDATE partners SET name = ?, diet = ?, fasting_mode = ?, allergies = ?, weight_kg = ?, height_cm = ?, age = ?, gender = ?, activity_level = ?, goal = ?, updated_at = ? WHERE id = ?`,
+    `UPDATE partners SET name = ?, diet = ?, fasting_mode = ?, allergies = ?, weight_kg = ?, height_cm = ?, age = ?, gender = ?, activity_level = ?, goal = ?, body_profile_visible = ?, updated_at = ? WHERE id = ?`,
   )
-    .bind(name, diet, fastingMode, allergies, weightKg, heightCm, age, gender, activityLevel, goal, now, partnerId)
+    .bind(name, diet, fastingMode, allergies, weightKg, heightCm, age, gender, activityLevel, goal, bodyProfileVisible, now, partnerId)
     .run();
 
   if (updates.allergens !== undefined) {
@@ -219,6 +225,7 @@ export async function updatePartner(
       ...existing,
       name, diet, allergies: textAllergies,
       weight_kg: weightKg, height_cm: heightCm, age, gender, activity_level: activityLevel, goal,
+      body_profile_visible: bodyProfileVisible,
       updated_at: now,
     };
     const profile = rowToProfile(rowToReturn);
@@ -229,6 +236,7 @@ export async function updatePartner(
   return rowToProfile({
     ...existing,
     name, diet, allergies, weight_kg: weightKg, height_cm: heightCm, age, gender, activity_level: activityLevel, goal,
+    body_profile_visible: bodyProfileVisible,
     updated_at: now,
   });
 }
@@ -236,6 +244,25 @@ export async function updatePartner(
 export async function handleGetProfiles(c: Context<{ Bindings: Env }>) {
   const householdId = c.req.param('id') as string;
   const profiles = await getPartners(c.env.DB, householdId);
+
+  // Determine who the requester is so we can apply visibility rules.
+  const claims = await readBearer(c.env.JWT_SECRET, c.req.raw).catch(() => null);
+  const requesterPartnerId = claims?.partnerId ?? null;
+
+  for (const profile of profiles) {
+    // If this is NOT the requester and they haven't opted in to sharing
+    // their body profile, scrub the sensitive fields.
+    if (requesterPartnerId && profile.id !== requesterPartnerId && !profile.bodyProfileVisible) {
+      profile.weightKg = null;
+      profile.heightCm = null;
+      profile.age = null;
+      profile.gender = null;
+      profile.activityLevel = null;
+      profile.goal = null;
+      profile.tdee = null;
+    }
+  }
+
   return c.json(profiles);
 }
 
@@ -254,6 +281,7 @@ export async function handleUpdateProfile(c: Context<{ Bindings: Env }>) {
     gender?: string | null;
     activityLevel?: string | null;
     goal?: string | null;
+    bodyProfileVisible?: boolean;
   };
 
   const profile = await updatePartner(c.env.DB, partnerId, {
@@ -268,6 +296,7 @@ export async function handleUpdateProfile(c: Context<{ Bindings: Env }>) {
     gender: body.gender,
     activityLevel: body.activityLevel,
     goal: body.goal,
+    bodyProfileVisible: body.bodyProfileVisible,
   });
 
   if (!profile) return c.json({ error: 'partner_not_found' }, 404);

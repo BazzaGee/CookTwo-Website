@@ -8,6 +8,10 @@ export type Category = 'Produce' | 'Meat' | 'Dairy' | 'Pantry' | 'Household' | '
 
 export type PartnerSlot = 1 | 2;
 
+export function partnerLabel(slot: PartnerSlot | number): string {
+  return slot === 1 ? 'Partner 1' : 'Partner 2';
+}
+
 export interface GroceryItem {
   id: string;
   householdId: string;
@@ -19,6 +23,8 @@ export interface GroceryItem {
   needsReview: boolean;
   addedByPartnerId: string;
   addedByPartnerSlot: PartnerSlot;
+  checkedByPartnerId?: string;
+  checkedByPartnerSlot?: number;
   createdAt: number;
   updatedAt: number;
 }
@@ -37,6 +43,7 @@ export interface PantryItem {
   addedByPartnerId: string;
   addedByPartnerSlot: PartnerSlot;
   createdAt: number;
+  updatedAt?: number;
 }
 
 export type SyncEvent =
@@ -49,7 +56,7 @@ export type SyncEvent =
   | { type: 'pantry_added'; item: PantryItem }
   | { type: 'pantry_updated'; item: PantryItem }
   | { type: 'pantry_deleted'; id: string }
-  | { type: 'meal_generated'; meal: GeneratedMeal; imageUrl?: string; recipeId?: string; generatedBySlot: PartnerSlot; generatedByName?: string; generatedByPartnerId?: string; aiMessage?: string; at: number }
+  | { type: 'meal_generated'; meal: GeneratedMeal; recipeId?: string; generatedBySlot: PartnerSlot; generatedByName?: string; generatedByPartnerId?: string; aiMessage?: string; at: number }
   | { type: 'recipe_added'; recipeId: string; recipeName: string; at: number }
   | { type: 'hello'; partnerId: string; slot: PartnerSlot; at: number };
 
@@ -64,9 +71,11 @@ interface GroceryItemRow {
   needs_review: number;
   added_by_partner_id: string;
   added_by_partner_slot: number;
+  checked_by_partner_id: string | null;
+  checked_by_partner_slot: number | null;
   created_at: number;
   updated_at: number;
-  [key: string]: string | number;
+  [key: string]: string | number | null;
 }
 
 interface PantryItemRow {
@@ -83,6 +92,7 @@ interface PantryItemRow {
   added_by_partner_id: string;
   added_by_partner_slot: number;
   created_at: number;
+  updated_at: number | null;
   [key: string]: string | number | null;
 }
 
@@ -98,6 +108,8 @@ function rowToItem(row: GroceryItemRow): GroceryItem {
     needsReview: (row.needs_review ?? 0) === 1,
     addedByPartnerId: row.added_by_partner_id,
     addedByPartnerSlot: row.added_by_partner_slot as PartnerSlot,
+    checkedByPartnerId: row.checked_by_partner_id ?? undefined,
+    checkedByPartnerSlot: row.checked_by_partner_slot ?? undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -118,6 +130,7 @@ function rowToPantry(row: PantryItemRow): PantryItem {
     addedByPartnerId: row.added_by_partner_id,
     addedByPartnerSlot: row.added_by_partner_slot as PartnerSlot,
     createdAt: row.created_at,
+    updatedAt: (row.updated_at as number) ?? undefined,
   };
 }
 
@@ -137,6 +150,8 @@ const SCHEMA = `
     needs_review INTEGER NOT NULL DEFAULT 0,
     added_by_partner_id TEXT NOT NULL,
     added_by_partner_slot INTEGER NOT NULL,
+    checked_by_partner_id TEXT,
+    checked_by_partner_slot INTEGER,
     created_at INTEGER NOT NULL,
     updated_at INTEGER NOT NULL
   );
@@ -156,10 +171,12 @@ const SCHEMA = `
     needs_review INTEGER NOT NULL DEFAULT 0,
     added_by_partner_id TEXT NOT NULL,
     added_by_partner_slot INTEGER NOT NULL,
-    created_at INTEGER NOT NULL
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER
   );
   CREATE INDEX IF NOT EXISTS idx_pantry_items_household ON pantry_items(household_id);
   CREATE INDEX IF NOT EXISTS idx_pantry_items_created ON pantry_items(created_at);
+  CREATE INDEX IF NOT EXISTS idx_pantry_items_name_unit ON pantry_items(lower(name), lower(quantity_unit));
 
   CREATE TABLE IF NOT EXISTS pantry_parse_cache (
     input_hash TEXT PRIMARY KEY,
@@ -248,6 +265,17 @@ export class HouseholdSync {
     } catch { /* column already exists */ }
     try {
       this.state.storage.sql.exec('ALTER TABLE pantry_items ADD COLUMN needs_review INTEGER NOT NULL DEFAULT 0');
+    } catch { /* column already exists */ }
+    // Phase 2a — track updated_at on pantry_items so merges can bump it.
+    try {
+      this.state.storage.sql.exec('ALTER TABLE pantry_items ADD COLUMN updated_at INTEGER');
+    } catch { /* column already exists */ }
+    // Phase 2b — record WHO ticked an item off (separate from who added it).
+    try {
+      this.state.storage.sql.exec('ALTER TABLE grocery_items ADD COLUMN checked_by_partner_id TEXT');
+    } catch { /* column already exists */ }
+    try {
+      this.state.storage.sql.exec('ALTER TABLE grocery_items ADD COLUMN checked_by_partner_slot INTEGER');
     } catch { /* column already exists */ }
   }
 
@@ -339,8 +367,8 @@ export class HouseholdSync {
       case 'item_toggled':
         return {
           id, householdId, createdAt,
-          partnerId: event.item.addedByPartnerId,
-          partnerSlot: event.item.addedByPartnerSlot,
+          partnerId: event.item.checkedByPartnerId ?? event.item.addedByPartnerId,
+          partnerSlot: (event.item.checkedByPartnerSlot as number) ?? event.item.addedByPartnerSlot,
           partnerName: null,
           actionType: event.item.isChecked ? 'item_checked' : 'item_unchecked',
           targetKind: 'grocery_item',
@@ -487,12 +515,18 @@ export class HouseholdSync {
 
   private eventToPushPayload(event: SyncEvent): PushPayload | null {
     switch (event.type) {
-      case 'item_added':
-        return { title: 'CookTwo', body: `New item added: ${event.item.name}`, tag: 'cfs-grocery' };
+      case 'item_added': {
+        const who = partnerLabel(event.item.addedByPartnerSlot);
+        return { title: 'CookTwo', body: `${who} added: ${event.item.name}`, tag: 'cfs-grocery' };
+      }
       case 'items_added':
         return { title: 'CookTwo', body: `${event.items.length} item${event.items.length > 1 ? 's' : ''} added to shopping list`, tag: 'cfs-grocery' };
-      case 'item_toggled':
-        return { title: 'CookTwo', body: `${event.item.name} ${event.item.isChecked ? 'checked off' : 'unchecked'}`, tag: 'cfs-grocery' };
+      case 'item_toggled': {
+        const slot = (event.item.checkedByPartnerSlot ?? event.item.addedByPartnerSlot) as PartnerSlot;
+        const who = partnerLabel(slot);
+        const action = event.item.isChecked ? 'checked off' : 'unchecked';
+        return { title: 'CookTwo', body: `${who} ${action}: ${event.item.name}`, tag: 'cfs-grocery' };
+      }
       case 'item_deleted':
         return { title: 'CookTwo', body: 'An item was removed', tag: 'cfs-grocery' };
       case 'items_moved':
@@ -603,7 +637,8 @@ export class HouseholdSync {
       const toggleMatch = path.match(/^\/items\/([^/]+)\/toggle$/);
       if (toggleMatch && method === 'PATCH') {
         const itemId = toggleMatch[1] as string;
-        const item = await this.toggleItem(itemId);
+        const body = await request.json().catch(() => ({})) as { toggledByPartnerId?: string | null; toggledByPartnerSlot?: number | null };
+        const item = await this.toggleItem(itemId, body.toggledByPartnerId ?? null, body.toggledByPartnerSlot ?? null);
         this.broadcast({ type: 'item_toggled', item });
         return this.json(item);
       }
@@ -999,40 +1034,19 @@ export class HouseholdSync {
           parsed.quantityUnit,
           now,
         );
-        const pantryId = crypto.randomUUID();
-        this.state.storage.sql.exec(
-          `INSERT INTO pantry_items
-            (id, household_id, name, quantity, category, quantity_value, quantity_unit, brand, is_food, needs_review, added_by_partner_id, added_by_partner_slot, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          pantryId,
-          householdId,
-          parsed.name,
-          parsed.quantityUnit ? `${parsed.quantityValue ?? ''} ${parsed.quantityUnit}`.trim() : '',
-          parsed.category,
-          parsed.quantityValue,
-          parsed.quantityUnit,
-          parsed.brand || item.brand,
-          1,
-          parsed.needsReview ? 1 : 0,
-          body.addedByPartnerId,
-          body.addedByPartnerSlot,
-          now,
-        );
-        pantryItems.push({
-          id: pantryId,
-          householdId,
+
+        const pantryResult = await this.mergeOrInsertPantryItem({
           name: parsed.name,
-          quantity: parsed.quantityUnit ? `${parsed.quantityValue ?? ''} ${parsed.quantityUnit}`.trim() : '',
-          category: parsed.category,
           quantityValue: parsed.quantityValue,
           quantityUnit: parsed.quantityUnit,
+          category: parsed.category,
           brand: parsed.brand || item.brand,
           isFood: true,
           needsReview: parsed.needsReview,
           addedByPartnerId: body.addedByPartnerId,
-          addedByPartnerSlot: body.addedByPartnerSlot as PartnerSlot,
-          createdAt: now,
+          addedByPartnerSlot: body.addedByPartnerSlot,
         });
+        pantryItems.push(pantryResult);
       }
 
       this.state.storage.sql.exec('DELETE FROM grocery_items WHERE id = ?', id);
@@ -1042,7 +1056,7 @@ export class HouseholdSync {
     return { deletedIds, pantryItems };
   }
 
-  private async toggleItem(id: string): Promise<GroceryItem> {
+  private async toggleItem(id: string, toggledByPartnerId: string | null, toggledByPartnerSlot: number | null): Promise<GroceryItem> {
     const cursor = this.state.storage.sql.exec<GroceryItemRow>(
       'SELECT * FROM grocery_items WHERE id = ?',
       id,
@@ -1052,14 +1066,26 @@ export class HouseholdSync {
 
     const newIsChecked = existing.is_checked === 1 ? 0 : 1;
     const now = Date.now();
-    this.state.storage.sql.exec(
-      'UPDATE grocery_items SET is_checked = ?, updated_at = ? WHERE id = ?',
-      newIsChecked,
-      now,
-      id,
-    );
 
-    return rowToItem({ ...existing, is_checked: newIsChecked, updated_at: now });
+    if (newIsChecked === 1 && toggledByPartnerId && toggledByPartnerSlot !== null) {
+      this.state.storage.sql.exec(
+        'UPDATE grocery_items SET is_checked = ?, checked_by_partner_id = ?, checked_by_partner_slot = ?, updated_at = ? WHERE id = ?',
+        newIsChecked, toggledByPartnerId, toggledByPartnerSlot, now, id,
+      );
+    } else {
+      this.state.storage.sql.exec(
+        'UPDATE grocery_items SET is_checked = ?, checked_by_partner_id = NULL, checked_by_partner_slot = NULL, updated_at = ? WHERE id = ?',
+        newIsChecked, now, id,
+      );
+    }
+
+    return rowToItem({
+      ...existing,
+      is_checked: newIsChecked,
+      checked_by_partner_id: newIsChecked === 1 ? toggledByPartnerId : null,
+      checked_by_partner_slot: newIsChecked === 1 ? toggledByPartnerSlot : null,
+      updated_at: now,
+    });
   }
 
   private async deleteItem(id: string): Promise<{ id: string; deleted: true }> {
@@ -1073,6 +1099,87 @@ export class HouseholdSync {
     );
     const rows = Array.from(cursor);
     return rows.map((row) => rowToPantry(row));
+  }
+
+  /**
+   * Insert a pantry item, or — if a row already exists with the same name AND
+   * the same unit (case-insensitive) and a numeric quantity — add the new
+   * quantity to the existing row instead. This is what makes the "200g + 100g
+   * bought = 300g in the pantry" behaviour work.
+   *
+   * Returns the inserted-or-merged PantryItem. When merging, the existing
+   * row's `added_by_partner_*` fields are left untouched (we don't re-attribute
+   * ownership on top-up).
+   */
+  private async mergeOrInsertPantryItem(args: {
+    name: string;
+    quantityValue: number | null;
+    quantityUnit: string;
+    category: string;
+    brand: string;
+    isFood: boolean;
+    needsReview: boolean;
+    addedByPartnerId: string;
+    addedByPartnerSlot: number;
+  }): Promise<PantryItem> {
+    const householdId = (this.state.id as { toString(): string }).toString();
+    const now = Date.now();
+    const name = args.name;
+    const unit = (args.quantityUnit || '').toLowerCase();
+
+    // Try to find an existing same-name, same-unit row to merge into.
+    if (args.quantityValue !== null && args.quantityValue !== undefined && unit) {
+      const cursor = this.state.storage.sql.exec<PantryItemRow>(
+        'SELECT * FROM pantry_items WHERE LOWER(name) = LOWER(?) AND LOWER(quantity_unit) = ?',
+        name, unit,
+      );
+      const existing = Array.from(cursor)[0];
+      if (existing && (existing.quantity_value as number | null) !== null && (existing.quantity_value as number | null) !== undefined) {
+        const newValue = (existing.quantity_value as number) + (args.quantityValue as number);
+        const display = `${newValue} ${existing.quantity_unit as string}`.trim();
+        this.state.storage.sql.exec(
+          'UPDATE pantry_items SET quantity_value = ?, quantity = ?, updated_at = ? WHERE id = ?',
+          newValue, display, now, existing.id,
+        );
+        const merged = {
+          ...existing,
+          quantity_value: newValue,
+          quantity: display,
+        } as PantryItemRow;
+        const result = rowToPantry(merged);
+        this.broadcast({ type: 'pantry_updated', item: result });
+        return result;
+      }
+    }
+
+    // No match — insert a new row.
+    const id = crypto.randomUUID();
+    const display = args.quantityUnit ? `${args.quantityValue ?? ''} ${args.quantityUnit}`.trim() : '';
+    this.state.storage.sql.exec(
+      `INSERT INTO pantry_items
+        (id, household_id, name, quantity, category, quantity_value, quantity_unit, brand, is_food, needs_review, added_by_partner_id, added_by_partner_slot, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      id, householdId, name, display, args.category, args.quantityValue, args.quantityUnit,
+      args.brand, args.isFood ? 1 : 0, args.needsReview ? 1 : 0,
+      args.addedByPartnerId, args.addedByPartnerSlot, now, now,
+    );
+    const result: PantryItem = {
+      id,
+      householdId,
+      name,
+      quantity: display,
+      category: args.category as Category,
+      quantityValue: args.quantityValue,
+      quantityUnit: args.quantityUnit,
+      brand: args.brand,
+      isFood: args.isFood,
+      needsReview: args.needsReview,
+      addedByPartnerId: args.addedByPartnerId,
+      addedByPartnerSlot: args.addedByPartnerSlot as PartnerSlot,
+      createdAt: now,
+    };
+    this.broadcast({ type: 'pantry_added', item: result });
+    return result;
   }
 
   private async addPantryItem(body: {
@@ -1089,44 +1196,17 @@ export class HouseholdSync {
 
     const parsed = parsePantryItemSync(rawInput);
 
-    const householdId = (this.state.id as { toString(): string }).toString();
-    const id = crypto.randomUUID();
-    const now = Date.now();
-
-    this.state.storage.sql.exec(
-      `INSERT INTO pantry_items
-        (id, household_id, name, quantity, category, quantity_value, quantity_unit, brand, is_food, needs_review, added_by_partner_id, added_by_partner_slot, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      id,
-      householdId,
-      parsed.name,
-      parsed.quantityUnit ? `${parsed.quantityValue ?? ''} ${parsed.quantityUnit}`.trim() : '',
-      parsed.category,
-      parsed.quantityValue,
-      parsed.quantityUnit,
-      parsed.brand,
-      parsed.isFood ? 1 : 0,
-      parsed.needsReview ? 1 : 0,
-      body.addedByPartnerId,
-      body.addedByPartnerSlot,
-      now,
-    );
-
-    return {
-      id,
-      householdId,
+    return this.mergeOrInsertPantryItem({
       name: parsed.name,
-      quantity: parsed.quantityUnit ? `${parsed.quantityValue ?? ''} ${parsed.quantityUnit}`.trim() : '',
-      category: parsed.category,
       quantityValue: parsed.quantityValue,
       quantityUnit: parsed.quantityUnit,
+      category: parsed.category,
       brand: parsed.brand,
       isFood: parsed.isFood,
       needsReview: parsed.needsReview,
       addedByPartnerId: body.addedByPartnerId,
-      addedByPartnerSlot: body.addedByPartnerSlot as PartnerSlot,
-      createdAt: now,
-    };
+      addedByPartnerSlot: body.addedByPartnerSlot,
+    });
   }
 
   private async addPantryItemsBulk(body: {
@@ -1134,8 +1214,6 @@ export class HouseholdSync {
     addedByPartnerId: string;
     addedByPartnerSlot: number;
   }): Promise<PantryItem[]> {
-    const householdId = (this.state.id as { toString(): string }).toString();
-    const now = Date.now();
     const results: PantryItem[] = [];
 
     for (const item of body.items) {
@@ -1143,42 +1221,19 @@ export class HouseholdSync {
       if (!rawInput) continue;
 
       const parsed = parsePantryItemSync(rawInput);
-      const id = crypto.randomUUID();
 
-      this.state.storage.sql.exec(
-        `INSERT INTO pantry_items
-          (id, household_id, name, quantity, category, quantity_value, quantity_unit, brand, is_food, needs_review, added_by_partner_id, added_by_partner_slot, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        id,
-        householdId,
-        parsed.name,
-        parsed.quantityUnit ? `${parsed.quantityValue ?? ''} ${parsed.quantityUnit}`.trim() : '',
-        parsed.category,
-        parsed.quantityValue,
-        parsed.quantityUnit,
-        parsed.brand,
-        parsed.isFood ? 1 : 0,
-        parsed.needsReview ? 1 : 0,
-        body.addedByPartnerId,
-        body.addedByPartnerSlot,
-        now,
-      );
-
-      results.push({
-        id,
-        householdId,
+      const result = await this.mergeOrInsertPantryItem({
         name: parsed.name,
-        quantity: parsed.quantityUnit ? `${parsed.quantityValue ?? ''} ${parsed.quantityUnit}`.trim() : '',
-        category: parsed.category,
         quantityValue: parsed.quantityValue,
         quantityUnit: parsed.quantityUnit,
+        category: parsed.category,
         brand: parsed.brand,
         isFood: parsed.isFood,
         needsReview: parsed.needsReview,
         addedByPartnerId: body.addedByPartnerId,
-        addedByPartnerSlot: body.addedByPartnerSlot as PartnerSlot,
-        createdAt: now,
+        addedByPartnerSlot: body.addedByPartnerSlot,
       });
+      results.push(result);
     }
 
     return results;
@@ -1224,9 +1279,9 @@ export class HouseholdSync {
       }
 
       if (ingredient.quantityUnit && pantryQuantityUnit && ingredient.quantityUnit.toLowerCase() !== pantryQuantityUnit.toLowerCase()) {
-        this.state.storage.sql.exec('DELETE FROM pantry_items WHERE id = ?', matchedItem.id);
-        removed.push(matchedItem.name as string);
-        this.broadcast({ type: 'pantry_deleted', id: matchedItem.id as string });
+        // Different units (e.g. pantry has grams, recipe asks for cups).
+        // Don't destroy the pantry row — just skip deduction for this ingredient.
+        // The user can correct the pantry unit if they want auto-deduction to work.
         continue;
       }
 

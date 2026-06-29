@@ -8,6 +8,7 @@ import { saveRecipe } from './recipes';
 import { detectPantryConflict } from '../lib/pantry-conflict';
 import { validateMealAgainstPantry } from '../lib/pantry-match';
 import { refundAI } from '../lib/usage';
+import { parseIngredientQuantity } from '../lib/pantry-parser';
 
 const CLASSIFY_KEYWORDS: Array<{ category: string; words: string[] }> = [
   { category: 'Produce', words: ['apple', 'banana', 'orange', 'lettuce', 'spinach', 'tomato', 'potato', 'onion', 'garlic', 'carrot', 'pepper', 'cucumber', 'broccoli', 'kale', 'mushroom', 'avocado', 'lemon', 'lime', 'berry', 'grape', 'mango', 'peach', 'pear', 'corn', 'zucchini', 'celery', 'ginger', 'herb', 'basil', 'cilantro', 'parsley'] },
@@ -55,6 +56,7 @@ export async function handleMealChat(c: Context<{ Bindings: Env }>): Promise<Res
     category?: string;
     quantityValue?: number | null;
     quantityUnit?: string;
+    addedByPartnerSlot?: number;
   }>;
 
   const profiles = await getPartners(c.env.DB, householdId);
@@ -237,7 +239,49 @@ export async function handleMealChat(c: Context<{ Bindings: Env }>): Promise<Res
 
       const generatedByName = profiles.find((p) => p.id === claims.partnerId)?.name;
 
+      // Auto-deduct pantry items used in this meal.
+      // Only deduct ingredients marked "have: true" (the AI identified them
+      // as already in the pantry). Missing items ("have: false") are added
+      // to the shopping list and should not be deducted yet.
+      const usedIngredients: Array<{ name: string; quantityValue: number | null; quantityUnit: string }> = [];
+      for (const ing of response.meal.ingredients) {
+        if (!ing.have) continue;
+        const parsed = parseIngredientQuantity(ing.quantity);
+        // Normalize the ingredient name — strip leading articles and units
+        // that frequently appear when the AI names an ingredient.
+        let name = ing.name.trim();
+        // Use the parsed display name if the name looks like it includes the
+        // quantity (e.g. the AI returns {"name": "200g pork mince", ...}).
+        // The parseIngredientQuantity parser does not extract from that format,
+        // so we check for a leading number as a heuristic.
+        if (/^\d/.test(name)) {
+          const fromName = parseIngredientQuantity(name);
+          if (fromName.value !== null && fromName.unit !== '') {
+            // Retain the whole string as the name — the DO's subtract
+            // method does a fuzzy match via .includes().
+          }
+        }
+        usedIngredients.push({
+          name,
+          quantityValue: parsed.value,
+          quantityUnit: parsed.unit,
+        });
+      }
+
       const doStub = c.env.HOUSEHOLD_SYNC.get(c.env.HOUSEHOLD_SYNC.idFromName(householdId));
+
+      if (usedIngredients.length > 0) {
+        try {
+          await doStub.fetch('https://do/pantry/subtract', {
+            method: 'POST',
+            body: JSON.stringify({ usedIngredients }),
+            headers: { 'content-type': 'application/json' },
+          });
+        } catch (deductErr) {
+          console.error('Failed to auto-deduct pantry items:', deductErr);
+        }
+      }
+
       await doStub.fetch('https://do/meal-event', {
         method: 'POST',
         body: JSON.stringify({

@@ -365,6 +365,61 @@ function normalizeUnit(raw: string): string {
   return UNIT_MAP[lower] || lower;
 }
 
+/**
+ * Parse an ingredient quantity string from the AI meal generator
+ * (e.g. "200g", "1 cup", "2 tbsp", "half an onion") into a numeric
+ * value + unit. Returns { value: null, unit: '' } when the string
+ * cannot be parsed — callers should treat that as "no quantity".
+ *
+ * This is used to deduct ingredient amounts from the pantry after a
+ * meal is generated, and to merge quantities when items are added.
+ */
+export function parseIngredientQuantity(input: string): { value: number | null; unit: string } {
+  const text = (input ?? '').trim();
+  if (!text) return { value: null, unit: '' };
+
+  // "200g" / "500ml" — number immediately followed by unit (no space)
+  const tightMatch = text.match(/^(\d+(?:\.\d+)?)\s*(kg|g|ml|l|lb|oz)$/i);
+  if (tightMatch) {
+    return { value: parseFloat(tightMatch[1]!), unit: normalizeUnit(tightMatch[2]!) };
+  }
+
+  // "1 cup", "2 tbsp", "3 cloves" — number + space-separated unit
+  const splitMatch = text.match(/^(\d+(?:\.\d+)?)\s*(cups?|tbsp|tsp|lbs?|oz|kg|g|ml|l(?:itres?|iters?)?|pieces?|slices?|cans?|bags?|boxes?|bottles?|jars?|packs?|dozen|bunches?|heads?|cloves?|sticks?|punnets?|loaf|tins?|packets?|blocks?|tubs?|trays?|cartons?|rolls?|pkts?)$/i);
+  if (splitMatch) {
+    return { value: parseFloat(splitMatch[1]!), unit: normalizeUnit(splitMatch[2]!) };
+  }
+
+  // "half a cup", "quarter onion"
+  const fractionMatch = text.match(/^(half|quarter|third)\s*(?:of\s*(?:a|an)?)?\s*(cups?|tbsp|tsp|lbs?|oz|kg|g|ml|l(?:itres?|iters?)?|pieces?|slices?|cans?|bags?|boxes?|bottles?|jars?|packs?|dozen|bunches?|heads?|cloves?|sticks?|punnets?|loaf|tins?|packets?|blocks?|tubs?|trays?|cartons?|rolls?|pkts?)?$/i);
+  if (fractionMatch) {
+    const fractionValues: Record<string, number> = { half: 0.5, quarter: 0.25, third: 0.333 };
+    return {
+      value: fractionValues[fractionMatch[1]!.toLowerCase()] ?? null,
+      unit: fractionMatch[2] ? normalizeUnit(fractionMatch[2]) : '',
+    };
+  }
+
+  // "1/2 cup", "3/4 tsp"
+  const fractionNotationMatch = text.match(/^(\d+)\s*\/\s*(\d+)\s*(cups?|tbsp|tsp|lbs?|oz|kg|g|ml|l(?:itres?|iters?)?|pieces?|slices?|cans?|bags?|boxes?|bottles?|jars?|packs?|dozen|bunches?|heads?|cloves?|sticks?|punnets?|loaf|tins?|packets?|blocks?|tubs?|trays?|cartons?|rolls?|pkts?)?$/i);
+  if (fractionNotationMatch) {
+    const num = parseInt(fractionNotationMatch[1]!);
+    const den = parseInt(fractionNotationMatch[2]!);
+    return {
+      value: den > 0 ? num / den : null,
+      unit: fractionNotationMatch[3] ? normalizeUnit(fractionNotationMatch[3]) : '',
+    };
+  }
+
+  // Bare number like "2"
+  const bareNumberMatch = text.match(/^(\d+(?:\.\d+)?)$/);
+  if (bareNumberMatch) {
+    return { value: parseFloat(bareNumberMatch[1]!), unit: '' };
+  }
+
+  return { value: null, unit: '' };
+}
+
 function extractQuantity(text: string): { value: number | null; unit: string; remaining: string } {
   const numericMatch = text.match(/^(\d+(?:\.\d+)?)\s*(cups?|tbsp|tsp|lbs?|oz|kg|g|ml|l(?:itres?|iters?)?|pieces?|slices?|cans?|bags?|boxes?|bottles?|jars?|packs?|dozen|bunches?|heads?|cloves?|sticks?|punnets?|loaf|tins?|packets?|blocks?|tubs?|trays?|cartons?|rolls?|pkts?)\s+(.+)/i);
   if (numericMatch) {

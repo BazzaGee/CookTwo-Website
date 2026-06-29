@@ -8,7 +8,6 @@ export interface Env {
   DEEPSEEK_KEY: string;
   ALIBABA_KEY: string;
   ZAI_KEY: string;
-  OPENROUTER_KEY: string;
   VAPID_PUBLIC_KEY: string;
   VAPID_PRIVATE_KEY: string;
   RESEND_API_KEY: string;

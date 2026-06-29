@@ -4,7 +4,7 @@ import { HouseholdSync } from './durable-objects/HouseholdSync';
 import { InviteStore } from './durable-objects/InviteStore';
 import { readBearer, signToken, verifyToken, type TokenClaims } from './lib/jwt';
 import { createPartner, getPartners, handleGetProfiles, handleUpdateProfile, updatePartner, type Diet } from './routes/profiles';
-import { handleGetWeekPlan, handleGenerateWeekPlan, handleConfirmMeal } from './routes/mealplan';
+import { handleConfirmMeal } from './routes/mealplan';
 import { handleGetRecipes, handleSaveRecipe, handleDeleteRecipe } from './routes/recipes';
 import { handleMealChat } from './routes/mealChat';
 import { handleGetActivity } from './routes/activity';
@@ -12,10 +12,8 @@ import { logToD1 } from './lib/activity';
 import { handleSubscribe, handleVerify, handleValidateAccess } from './routes/waitlist';
 import { handleListDiets, handleGetDiet, handleListArticles, handleGetArticle } from './routes/diet-info';
 import { getCoupleDietRules } from './lib/diet-rules';
-import { generateMeal, type GeneratedMeal } from './lib/ai';
-import { generateMealImage } from './lib/image-gen';
-import { parsePantryWithAI } from './lib/ai-pantry-parser';
-import { getUsageState, withQuotaAI, withQuotaImage, tryReserveAI, refundAI, tryReserveImage, refundImage, checkPremiumGate } from './lib/usage';
+import { generateMeal } from './lib/ai';
+import { getUsageState, withQuotaAI, tryReserveAI, refundAI, checkPremiumGate } from './lib/usage';
 import { isStripeConfigured, createCheckoutSession, createPortalSession, verifyAndParseWebhook, applyWebhookEvent, StripeNotConfiguredError, updateStripeCustomerId } from './lib/billing';
 import type { Env } from './env';
 import type { Category } from './durable-objects/HouseholdSync';
@@ -348,26 +346,123 @@ app.post('/api/household/link', async (c) => {
 
   const newPartnerId = claims.partnerId;
   const newSlot = existingProfiles.length === 0 ? 1 : 2;
+  const oldHouseholdId = claims.householdId;
 
+  // 1. Read the linker's existing full profile (body, diet, allergens, fasting)
+  //    before it gets deleted, so we can re-insert with everything preserved.
+  const oldProfile = await c.env.DB.prepare(
+    'SELECT * FROM partners WHERE id = ?',
+  ).bind(newPartnerId).first<{
+    diet: string; fasting_mode: string | null; allergies: string;
+    weight_kg: number | null; height_cm: number | null; age: number | null;
+    gender: string | null; activity_level: string | null; goal: string | null;
+    body_profile_visible: number;
+  }>();
+
+  // 2. Delete old partners row and re-insert with preserved fields.
   await c.env.DB.prepare('DELETE FROM partners WHERE id = ?')
     .bind(newPartnerId)
     .run();
 
+  const now = Date.now();
+  const diet = oldProfile?.diet ?? 'omnivore';
+  const fastingMode = oldProfile?.fasting_mode ?? null;
+  const allergies = oldProfile?.allergies ?? '';
+  const weightKg = oldProfile?.weight_kg ?? null;
+  const heightCm = oldProfile?.height_cm ?? null;
+  const age = oldProfile?.age ?? null;
+  const gender = oldProfile?.gender ?? null;
+  const activityLevel = oldProfile?.activity_level ?? null;
+  const goal = oldProfile?.goal ?? null;
+  const bodyProfileVisible = oldProfile?.body_profile_visible ?? 0;
+
   await c.env.DB.prepare(
-    `INSERT INTO partners (id, household_id, slot, name, diet, allergies, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO partners
+     (id, household_id, slot, name, diet, fasting_mode, allergies,
+      weight_kg, height_cm, age, gender, activity_level, goal, body_profile_visible,
+      created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   )
     .bind(
-      newPartnerId,
-      targetHouseholdId,
-      newSlot,
-      claims.displayName,
-      'omnivore',
-      '',
-      Date.now(),
-      Date.now(),
+      newPartnerId, targetHouseholdId, newSlot, claims.displayName,
+      diet, fastingMode, allergies,
+      weightKg, heightCm, age, gender, activityLevel, goal, bodyProfileVisible,
+      now, now,
     )
     .run();
+
+  // 3. If the old household is different, migrate D1 data.
+  if (oldHouseholdId && oldHouseholdId !== targetHouseholdId) {
+    try {
+      await c.env.DB.prepare(
+        'UPDATE recipes SET household_id = ? WHERE household_id = ?',
+      ).bind(targetHouseholdId, oldHouseholdId).run();
+    } catch { /* table may not exist */ }
+    try {
+      await c.env.DB.prepare(
+        'UPDATE household_subscriptions SET household_id = ? WHERE household_id = ?',
+      ).bind(targetHouseholdId, oldHouseholdId).run();
+    } catch { /* may not exist */ }
+
+    // 4. Migrate DO data from old household to new household.
+    try {
+      const oldStub = c.env.HOUSEHOLD_SYNC.get(c.env.HOUSEHOLD_SYNC.idFromName(oldHouseholdId));
+      const newStub = c.env.HOUSEHOLD_SYNC.get(c.env.HOUSEHOLD_SYNC.idFromName(targetHouseholdId));
+
+      // Copy pantry items
+      const pantryRes = await oldStub.fetch('https://do/pantry');
+      if (pantryRes.ok) {
+        const pantryItems = (await pantryRes.json()) as Array<{
+          name: string; quantity: string; category?: string;
+          quantityValue?: number | null; quantityUnit?: string;
+          brand?: string; isFood?: boolean; needsReview?: boolean;
+        }>;
+        for (const item of pantryItems) {
+          await newStub.fetch('https://do/pantry', {
+            method: 'POST',
+            body: JSON.stringify({
+              name: item.quantity ? `${item.quantity} ${item.name}`.trim() : item.name,
+              quantity: '',
+              addedByPartnerId: newPartnerId,
+              addedByPartnerSlot: newSlot,
+            }),
+            headers: { 'content-type': 'application/json' },
+          }).catch(() => {});
+        }
+      }
+
+      // Copy unchecked grocery items
+      const itemsRes = await oldStub.fetch('https://do/items');
+      if (itemsRes.ok) {
+        const groceryItems = (await itemsRes.json()) as Array<{
+          id: string; name: string; category?: string; isChecked?: boolean;
+          isFood?: boolean; brand?: string; needsReview?: boolean;
+        }>;
+        for (const item of groceryItems) {
+          if (item.isChecked) continue; // skip checked items
+          await newStub.fetch('https://do/items', {
+            method: 'POST',
+            body: JSON.stringify({
+              name: item.name,
+              category: item.category,
+              addedByPartnerId: newPartnerId,
+              addedByPartnerSlot: newSlot,
+            }),
+            headers: { 'content-type': 'application/json' },
+          }).catch(() => {});
+        }
+      }
+    } catch (err) {
+      console.error('Failed to migrate DO data during household link:', err);
+      // Continue — the link succeeded, the data migration is best-effort.
+    }
+
+    // 5. Clean up the old household — delete orphaned code from InviteStore
+    //    so no one else can join the now-empty household.
+    try {
+      await inviteStub.fetch(`https://do/codes/${claims.inviteCode}`, { method: 'DELETE' });
+    } catch { /* best-effort */ }
+  }
 
   const newToken = await signToken(c.env.JWT_SECRET, {
     householdId: targetHouseholdId,
@@ -453,9 +548,15 @@ app.post('/api/household/:id/items/move-to-pantry', async (c) => {
 app.patch('/api/household/:id/items/:itemId/toggle', async (c) => {
   const denied = await requireAuth(c);
   if (denied) return denied;
+  const claims = await readBearer(c.env.JWT_SECRET, c.req.raw);
   const stub = getStub(c, c.req.param('id'));
   return stub.fetch(`https://do/items/${c.req.param('itemId')}/toggle`, {
     method: 'PATCH',
+    body: JSON.stringify({
+      toggledByPartnerId: claims?.partnerId ?? null,
+      toggledByPartnerSlot: claims?.slot ?? null,
+    }),
+    headers: { 'content-type': 'application/json' },
   });
 });
 
@@ -563,114 +664,6 @@ app.delete('/api/household/:id/push/unsubscribe', async (c) => {
   });
 });
 
-app.post('/api/household/:id/reclassify', async (c) => {
-  const denied = await requireAuth(c);
-  if (denied) return denied;
-
-  const householdId = c.req.param('id') as string;
-  const tz = getTz(c);
-
-  const reserved = await tryReserveAI(c.env.DB, householdId, tz, 1);
-  if (!reserved) {
-    return c.json({ error: 'quota_exceeded', message: 'No AI requests left for today. Upgrade for 70/day.', code: 'quota_exceeded' }, 402);
-  }
-
-  try {
-    const body = (await c.req.json().catch(() => ({}))) as { scope?: 'pantry' | 'items' | 'all' };
-    const scope = body.scope || 'all';
-    const stub = getStub(c, householdId);
-
-    const provider = (c.env.AI_PROVIDER || 'deepseek') as 'deepseek' | 'alibaba' | 'zai';
-    const apiKey = (c.env as unknown as Record<string, unknown>)[
-      provider === 'alibaba' ? 'ALIBABA_KEY' : provider === 'zai' ? 'ZAI_KEY' : 'DEEPSEEK_KEY'
-    ] as string;
-
-    if (!apiKey) {
-      await refundAI(c.env.DB, householdId, 1);
-      return c.json({ error: 'AI not configured' }, 503);
-    }
-
-  const updatedItems: Array<{ id: string; type: 'pantry' | 'item'; category: Category; isFood: boolean; name: string }> = [];
-
-  if (scope === 'all' || scope === 'items') {
-    const itemsRes = await stub.fetch('https://do/items');
-    const items = (await itemsRes.json()) as Array<{ id: string; name: string; needsReview: boolean; category: string }>;
-    const reviewItems = items.filter((i) => i.needsReview || i.category === 'Other');
-
-    if (reviewItems.length > 0) {
-      const aiInputs = reviewItems.map((i) => i.name);
-      try {
-        const aiResults = await parsePantryWithAI(aiInputs, apiKey);
-        for (let j = 0; j < reviewItems.length; j++) {
-          const item = reviewItems[j]!;
-          const aiResult = aiResults[j];
-          if (aiResult && aiResult.category !== item.category) {
-            const patchRes = await stub.fetch(`https://do/items/${item.id}`, {
-              method: 'PATCH',
-              body: JSON.stringify({ category: aiResult.category, isFood: aiResult.isFood, needsReview: false }),
-              headers: { 'content-type': 'application/json' },
-            });
-            if (patchRes.ok) {
-              const patched = (await patchRes.json()) as { id: string; category: Category; isFood: boolean; name: string };
-              updatedItems.push({ id: patched.id, type: 'item', category: patched.category, isFood: patched.isFood, name: patched.name });
-            }
-          } else if (aiResult) {
-            await stub.fetch(`https://do/items/${item.id}`, {
-              method: 'PATCH',
-              body: JSON.stringify({ needsReview: false }),
-              headers: { 'content-type': 'application/json' },
-            });
-          }
-        }
-      } catch (err) {
-        console.error('AI reclassification failed for items:', err);
-      }
-    }
-  }
-
-  if (scope === 'all' || scope === 'pantry') {
-    const pantryRes = await stub.fetch('https://do/pantry');
-    const pantryItems = (await pantryRes.json()) as Array<{ id: string; name: string; needsReview: boolean; category: string }>;
-    const reviewItems = pantryItems.filter((i) => i.needsReview || i.category === 'Other');
-
-    if (reviewItems.length > 0) {
-      const aiInputs = reviewItems.map((i) => i.name);
-      try {
-        const aiResults = await parsePantryWithAI(aiInputs, apiKey);
-        for (let j = 0; j < reviewItems.length; j++) {
-          const item = reviewItems[j]!;
-          const aiResult = aiResults[j];
-          if (aiResult && aiResult.category !== item.category) {
-            const patchRes = await stub.fetch(`https://do/pantry/${item.id}`, {
-              method: 'PATCH',
-              body: JSON.stringify({ category: aiResult.category, isFood: aiResult.isFood, needsReview: false, name: aiResult.name }),
-              headers: { 'content-type': 'application/json' },
-            });
-            if (patchRes.ok) {
-              const patched = (await patchRes.json()) as { id: string; category: Category; isFood: boolean; name: string };
-              updatedItems.push({ id: patched.id, type: 'pantry', category: patched.category, isFood: patched.isFood, name: patched.name });
-            }
-          } else if (aiResult) {
-            await stub.fetch(`https://do/pantry/${item.id}`, {
-              method: 'PATCH',
-              body: JSON.stringify({ needsReview: false, name: aiResult.name }),
-              headers: { 'content-type': 'application/json' },
-            });
-          }
-        }
-      } catch (err) {
-        console.error('AI reclassification failed for pantry:', err);
-      }
-    }
-  }
-
-    return c.json({ reclassified: updatedItems, count: updatedItems.length });
-  } catch (err) {
-    await refundAI(c.env.DB, householdId, 1);
-    throw err;
-  }
-});
-
 app.post('/api/household/:id/meal-plan/generate', async (c) => {
   const denied = await requireAuth(c);
   if (denied) return denied;
@@ -717,31 +710,6 @@ app.post('/api/household/:id/meal-plan/generate', async (c) => {
   }
 });
 
-app.get('/api/household/:id/meal-plan/week', async (c) => {
-  const denied = await requireAuth(c);
-  if (denied) return denied;
-  return handleGetWeekPlan(c);
-});
-
-app.post('/api/household/:id/meal-plan/week/generate', async (c) => {
-  const denied = await requireAuth(c);
-  if (denied) return denied;
-  const householdId = c.req.param('id') as string;
-  const tz = getTz(c);
-
-  const reserved = await tryReserveAI(c.env.DB, householdId, tz, 7);
-  if (!reserved) {
-    return c.json({ error: 'quota_exceeded', message: 'Not enough AI requests. Need 7 to generate a full week. Upgrade for 70/day.', code: 'quota_exceeded' }, 402);
-  }
-
-  try {
-    return await handleGenerateWeekPlan(c);
-  } catch (err) {
-    await refundAI(c.env.DB, householdId, 7);
-    throw err;
-  }
-});
-
 app.post('/api/household/:id/meal-plan/confirm', async (c) => {
   const denied = await requireAuth(c);
   if (denied) return denied;
@@ -763,43 +731,6 @@ app.post('/api/household/:id/meal-chat', async (c) => {
     return await handleMealChat(c);
   } catch (err) {
     await refundAI(c.env.DB, householdId, 1);
-    throw err;
-  }
-});
-
-app.post('/api/household/:id/meal-image', async (c) => {
-  const denied = await requireAuth(c);
-  if (denied) return denied;
-
-  const householdId = c.req.param('id') as string;
-  const tz = getTz(c);
-
-  const tier = await checkPremiumGate(c.env.DB, householdId);
-  if (tier !== 'premium') {
-    return c.json({ error: 'premium_only', message: 'Image generation is a Premium feature.', code: 'premium_only' }, 403);
-  }
-
-  const reserved = await tryReserveImage(c.env.DB, householdId, tz);
-  if (!reserved) {
-    return c.json({ error: 'image_quota_exceeded', message: 'You\'ve used all 3 image generations for today. Resets at midnight.', code: 'image_quota_exceeded' }, 403);
-  }
-
-  try {
-    const meal = await c.req.json<GeneratedMeal>();
-    if (!meal.name) {
-      await refundImage(c.env.DB, householdId);
-      return jsonError('meal name is required', 400);
-    }
-
-    const url = await generateMealImage(c.env, meal);
-    if (!url) {
-      await refundImage(c.env.DB, householdId);
-      return c.json({ error: 'Image generation failed. Please try again later.' }, 503);
-    }
-
-    return c.json({ url });
-  } catch (err) {
-    await refundImage(c.env.DB, householdId);
     throw err;
   }
 });

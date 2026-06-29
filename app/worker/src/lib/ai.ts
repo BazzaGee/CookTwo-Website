@@ -439,7 +439,7 @@ function buildAllergenList(profiles: PartnerContext[]): { combinedList: string; 
 }
 
 export function buildChatSystemPrompt(
-  pantryItems: Array<{ name: string; quantity: string; category?: string; quantityValue?: number | null; quantityUnit?: string }>,
+  pantryItems: Array<{ name: string; quantity: string; category?: string; quantityValue?: number | null; quantityUnit?: string; addedByPartnerSlot?: number }>,
   profiles: PartnerContext[],
   dietRulesPrompt?: string,
   mode?: MealGenerationMode,
@@ -449,6 +449,9 @@ export function buildChatSystemPrompt(
     const parts: string[] = [];
     if (qty) parts.push(qty);
     if (i.category) parts.push(i.category);
+    if (i.addedByPartnerSlot) {
+      parts.push(i.addedByPartnerSlot === 1 ? 'added by Partner 1' : 'added by Partner 2');
+    }
     return `${i.name}${parts.length > 0 ? ` (${parts.join(', ')})` : ''}`;
   }).join(', ') || 'empty';
 
