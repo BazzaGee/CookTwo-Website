@@ -1,46 +1,32 @@
 import { useState, useRef, useEffect, type FormEvent, type KeyboardEvent } from 'react';
-import { Sparkles, Clock, Plus, Check, CalendarDays, Bookmark, Send, ShoppingCart, Package, ChevronDown, ChevronUp, Trash2, ImageIcon, RefreshCw, AlertCircle, Mic } from 'lucide-react';
+import { Sparkles, Clock, Plus, Check, Bookmark, Send, ShoppingCart, Package, ChevronDown, ChevronUp, Trash2, AlertCircle, Mic } from 'lucide-react';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import { useMealChat, type ChatMessage } from '../hooks/useMealChat';
 import { usePantry } from '../hooks/usePantry';
 import { useRecipes } from '../hooks/useRecipes';
-import { useWeekPlan } from '../hooks/useWeekPlan';
 import { useGroceryList } from '../hooks/useGroceryList';
-import { useMealImage } from '../hooks/useMealImage';
 import { useUsage } from '../hooks/useUsage';
 import { usePaywallStore } from '../stores/paywallStore';
 
 import type { GeneratedMeal } from '../types/meal';
 
-// Version: 2026-06-08-fix-no-mock
-console.log('[MealPlanTab] v2026-06-08-fix-no-mock loaded');
-
-const DAYS = [
-  { key: 'mon', label: 'Mon' },
-  { key: 'tue', label: 'Tue' },
-  { key: 'wed', label: 'Wed' },
-  { key: 'thu', label: 'Thu' },
-  { key: 'fri', label: 'Fri' },
-  { key: 'sat', label: 'Sat' },
-  { key: 'sun', label: 'Sun' },
-] as const;
+// Version: 2026-06-29-remove-week-plan
+console.log('[MealPlanTab] v2026-06-29-remove-week-plan loaded');
 
 export default function MealPlanTab() {
-  const [view, setView] = useState<'single' | 'week' | 'saved'>('single');
+  const [view, setView] = useState<'single' | 'saved'>('single');
 
   return (
     <div className="px-6 py-4">
       <div className="sticky top-0 z-10 bg-cream py-4 -mx-6 px-6 border-b border-terracotta/30 -mt-4 mb-4">
         <div>
           <h1 className="text-text-primary text-3xl font-semibold tracking-tight">
-            {view === 'single' ? 'What should we cook?' : view === 'saved' ? 'Our recipes' : 'Our week'}
+            {view === 'single' ? 'What should we cook?' : 'Our recipes'}
           </h1>
           <p className="text-text-secondary text-sm mt-1">
             {view === 'single'
               ? 'Chat with AI to plan your meal.'
-              : view === 'saved'
-                ? 'Meals you love, saved for later.'
-                : 'Plan the week. Shop once.'}
+              : 'Meals you love, saved for later.'}
           </p>
         </div>
         <div className="flex bg-cream-dark rounded-xl p-1">
@@ -62,19 +48,10 @@ export default function MealPlanTab() {
           >
             Saved
           </button>
-          <button
-            type="button"
-            onClick={() => setView('week')}
-            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
-              view === 'week' ? 'bg-white text-text-primary shadow-sm' : 'text-text-secondary'
-            }`}
-          >
-            Week
-          </button>
         </div>
       </div>
 
-      {view === 'single' ? <MealChatView /> : view === 'saved' ? <SavedRecipesView /> : <WeekView />}
+      {view === 'single' ? <MealChatView /> : <SavedRecipesView />}
     </div>
   );
 }
@@ -399,9 +376,6 @@ function InlineMealCard({ meal }: { meal: GeneratedMeal }) {
   const haveCount = meal.ingredients.filter((i) => i.have).length;
   const { addItem } = useGroceryList();
   const [addedMissing, setAddedMissing] = useState(false);
-  const { url: imageUrl, generating: imageGenerating, error: imageError, generate: generateImage } = useMealImage(meal.name);
-  const { isPremium } = useUsage();
-  const showPaywall = usePaywallStore((s) => s.show);
 
   function handleAddMissing() {
     const missing = meal.ingredients.filter((i) => !i.have);
@@ -426,10 +400,10 @@ function InlineMealCard({ meal }: { meal: GeneratedMeal }) {
             <Clock size={12} />
             {meal.timeMinutes}m
           </span>
-            <span className="flex items-center gap-1 text-terracotta font-medium">
-              <Check size={12} />
-              {haveCount} in pantry
-            </span>
+          <span className="flex items-center gap-1 text-terracotta font-medium">
+            <Check size={12} />
+            {haveCount} in pantry
+          </span>
           {missingCount > 0 && (
             <span className="flex items-center gap-1 text-terracotta font-medium">
               <Plus size={12} />
@@ -451,15 +425,6 @@ function InlineMealCard({ meal }: { meal: GeneratedMeal }) {
             </div>
           ))}
         </div>
-        {imageUrl && (
-          <div className="border-t border-border/50 mt-3 pt-3">
-            <p className="text-text-secondary text-[10px] uppercase tracking-[0.15em] font-medium mb-2">Photo</p>
-            <img src={imageUrl} alt={meal.name} className="w-full rounded-lg object-cover aspect-square" loading="lazy" />
-          </div>
-        )}
-        {imageError && !imageGenerating && (
-          <p className="text-error text-xs flex items-center gap-1 mt-3"><AlertCircle size={12} /> {imageError}</p>
-        )}
       </div>
 
       <button
@@ -516,34 +481,6 @@ function InlineMealCard({ meal }: { meal: GeneratedMeal }) {
       )}
 
       <div className="px-4 py-2.5 border-t border-border/50 flex gap-2">
-        {isPremium ? (
-          <button
-            type="button"
-            onClick={() => generateImage(meal)}
-            disabled={imageGenerating}
-            className={`text-xs font-medium py-2 px-3 rounded-lg transition-all flex items-center gap-1.5 ${
-              imageUrl
-                ? 'bg-terracotta/10 text-terracotta border border-terracotta/30'
-                : 'bg-white text-text-secondary border border-border hover:bg-cream'
-            } disabled:opacity-40`}
-          >
-            {imageGenerating
-              ? <RefreshCw size={12} className="animate-spin" />
-              : <ImageIcon size={12} />
-            }
-            {imageGenerating ? 'Generating...' : imageUrl ? 'Regenerate' : 'Image'}
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={() => showPaywall('premium_only')}
-            className="text-xs font-medium py-2 px-3 rounded-lg transition-all flex items-center gap-1.5 bg-cream text-text-secondary border border-border opacity-50 cursor-not-allowed"
-            title="Premium feature"
-          >
-            <ImageIcon size={12} />
-            Premium
-          </button>
-        )}
         <button
           type="button"
           onClick={handleAddMissing}
@@ -674,9 +611,6 @@ function SavedRecipeCard({
   const confirmTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { addItem } = useGroceryList();
   const [addedMissing, setAddedMissing] = useState(false);
-  const { url: imageUrl, generating: imageGenerating, error: imageError, generate: generateImage } = useMealImage(meal.name);
-  const { isPremium } = useUsage();
-  const showPaywall = usePaywallStore((s) => s.show);
 
   const missingCount = meal.ingredients.filter((i) => !i.have).length;
 
@@ -761,15 +695,6 @@ function SavedRecipeCard({
                   </div>
                 ))}
               </div>
-              {imageUrl && (
-                <div className="mb-3">
-                  <p className="text-text-secondary text-[10px] uppercase tracking-[0.15em] font-medium mb-2">Photo</p>
-                  <img src={imageUrl} alt={meal.name} className="w-full rounded-lg object-cover aspect-square" loading="lazy" />
-                </div>
-              )}
-              {imageError && !imageGenerating && (
-                <p className="text-error text-xs flex items-center gap-1 mb-3"><AlertCircle size={12} /> {imageError}</p>
-              )}
             </div>
 
             <div className="px-5 pb-3">
@@ -815,34 +740,6 @@ function SavedRecipeCard({
           </div>
 
           <div className="border-t border-border px-5 py-2.5 flex gap-2">
-            {isPremium ? (
-              <button
-                type="button"
-                onClick={() => generateImage(meal)}
-                disabled={imageGenerating}
-                className={`text-xs font-medium py-2 px-3 rounded-lg transition-all flex items-center gap-1.5 ${
-                  imageUrl
-                    ? 'bg-terracotta/10 text-terracotta border border-terracotta/30'
-                    : 'bg-cream text-text-secondary border border-border hover:bg-cream-dark'
-                } disabled:opacity-40`}
-              >
-                {imageGenerating
-                  ? <RefreshCw size={12} className="animate-spin" />
-                  : <ImageIcon size={12} />
-                }
-                {imageGenerating ? 'Generating...' : imageUrl ? 'Regenerate' : 'Image'}
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => showPaywall('premium_only')}
-                className="text-xs font-medium py-2 px-3 rounded-lg transition-all flex items-center gap-1.5 bg-cream text-text-secondary border border-border opacity-50 cursor-not-allowed"
-                title="Premium feature"
-              >
-                <ImageIcon size={12} />
-                Premium
-              </button>
-            )}
             <button
               type="button"
               onClick={handleAddMissing}
@@ -872,161 +769,6 @@ function SavedRecipeCard({
           </div>
         </>
       )}
-    </div>
-  );
-}
-
-function WeekView() {
-  const { isGenerating, generateWeek, getMeal, hasPlan, error } = useWeekPlan();
-  const { addItem } = useGroceryList();
-  const [mealType, setMealType] = useState<'breakfast' | 'lunch' | 'dinner' | 'any'>('dinner');
-
-  async function handlePopulateList() {
-    const allMissing = new Set<string>();
-    for (const day of DAYS) {
-      const meal = getMeal(day.key);
-      if (meal) {
-        for (const ing of meal.ingredients) {
-          if (!ing.have) allMissing.add(ing.name);
-        }
-      }
-    }
-    for (const name of allMissing) {
-      addItem({ name });
-    }
-  }
-
-  const totalMissing = new Set<string>();
-  for (const day of DAYS) {
-    const meal = getMeal(day.key);
-    if (meal) {
-      for (const ing of meal.ingredients) {
-        if (!ing.have) totalMissing.add(ing.name);
-      }
-    }
-  }
-
-  if (!hasPlan && !isGenerating) {
-    return (
-      <div className="text-center py-16">
-        <div className="w-16 h-16 bg-terracotta/10 rounded-full flex items-center justify-center mx-auto mb-6">
-          <CalendarDays size={28} className="text-terracotta" />
-        </div>
-        <p className="text-text-primary text-xl font-semibold mb-2">
-          Plan the whole week
-        </p>
-        <p className="text-text-secondary text-base leading-relaxed max-w-sm mx-auto mb-6">
-          One tap generates 7 meals. Missing ingredients go straight to your grocery list.
-        </p>
-        <div className="flex justify-center gap-2 mb-6">
-          {(['breakfast', 'lunch', 'dinner', 'any'] as const).map((mt) => (
-            <button
-              key={mt}
-              type="button"
-              onClick={() => setMealType(mt)}
-              className={`text-xs font-medium py-2 px-4 rounded-full capitalize transition-colors ${
-                mealType === mt
-                  ? 'bg-terracotta text-white'
-                  : 'bg-white text-text-secondary border border-border hover:bg-cream'
-              }`}
-            >
-              {mt}
-            </button>
-          ))}
-        </div>
-        {error && (
-          <p className="text-error text-sm mb-4">{error}</p>
-        )}
-        <button
-          type="button"
-          onClick={() => generateWeek(mealType)}
-          disabled={isGenerating}
-          className="bg-terracotta text-white font-medium py-4 px-8 rounded-2xl hover:bg-terracotta-dark active:scale-[0.99] transition-all inline-flex items-center gap-2 disabled:opacity-50"
-        >
-          <CalendarDays size={18} />
-          Generate the week
-        </button>
-      </div>
-    );
-  }
-
-  if (isGenerating) {
-    return (
-      <div className="text-center py-16">
-        <div className="w-16 h-16 bg-terracotta/10 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
-          <CalendarDays size={28} className="text-terracotta" />
-        </div>
-        <p className="text-text-primary text-lg font-medium">Planning your week…</p>
-        <p className="text-text-secondary text-sm mt-2">This takes a moment.</p>
-      </div>
-    );
-  }
-
-  if (error && !hasPlan) {
-    return (
-      <div className="text-center py-16">
-        <div className="w-16 h-16 bg-error/10 rounded-full flex items-center justify-center mx-auto mb-6">
-          <AlertCircle size={28} className="text-error" />
-        </div>
-        <p className="text-text-primary text-lg font-medium mb-2">Something went wrong</p>
-        <p className="text-error text-sm mb-6">{error}</p>
-        <button
-          type="button"
-          onClick={() => generateWeek(mealType)}
-          className="bg-terracotta text-white font-medium py-3 px-6 rounded-xl hover:bg-terracotta-dark active:scale-[0.99] transition-all"
-        >
-          Try again
-        </button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-6">
-      <div className="grid gap-3">
-        {DAYS.map((day) => {
-          const meal = getMeal(day.key);
-          return (
-            <div
-              key={day.key}
-              className="bg-white border border-border rounded-xl px-5 py-4 flex items-center gap-4"
-            >
-              <span className="w-10 text-text-secondary text-sm font-medium text-center">
-                {day.label}
-              </span>
-              {meal ? (
-                <div className="flex-1 min-w-0">
-                  <p className="text-text-primary text-sm font-medium truncate">{meal.name}</p>
-                  <p className="text-text-secondary text-xs">
-                    {meal.timeMinutes}min · {meal.calories}cal
-                  </p>
-                </div>
-              ) : (
-                <p className="flex-1 text-text-secondary text-sm italic">Not planned</p>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      <button
-        type="button"
-        onClick={handlePopulateList}
-        disabled={totalMissing.size === 0}
-          className="w-full bg-terracotta text-white font-medium py-3 px-6 rounded-xl hover:bg-terracotta-dark active:scale-[0.99] transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-      >
-        <Plus size={16} />
-        Add {totalMissing.size} missing ingredients to list
-      </button>
-
-      <button
-        type="button"
-        onClick={() => generateWeek(mealType)}
-        className="w-full bg-cream text-text-secondary font-medium py-3 px-6 rounded-xl border border-border hover:bg-cream-dark transition-colors flex items-center justify-center gap-2"
-      >
-        <Sparkles size={16} />
-        Regenerate the week
-      </button>
     </div>
   );
 }

@@ -665,7 +665,7 @@ function ProfileCard({
               }
             </div>
           </div>
-          {profile.tdee && (
+          {(isYou || profile.bodyProfileVisible) && profile.tdee && (
             <>
               <div className="pt-3 border-t border-border">
                 <p className="text-text-secondary text-xs tracking-wide uppercase">Body profile</p>
@@ -676,6 +676,30 @@ function ProfileCard({
                   Goal: {GOAL_LABELS[profile.goal!]} · Target: {profile.tdee.targetCalories} cal/day
                 </p>
               </div>
+              {isYou && (
+                <div className="pt-2 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await updateProfile(profile.id, { bodyProfileVisible: !profile.bodyProfileVisible });
+                    }}
+                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                      profile.bodyProfileVisible ? 'bg-sage' : 'bg-cream-dark'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
+                        profile.bodyProfileVisible ? 'translate-x-4' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                  <span className="text-text-secondary text-xs">
+                    {profile.bodyProfileVisible
+                      ? 'Visible to your partner'
+                      : 'Hidden from your partner'}
+                  </span>
+                </div>
+              )}
             </>
           )}
         </div>

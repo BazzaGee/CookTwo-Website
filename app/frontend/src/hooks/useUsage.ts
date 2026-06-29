@@ -6,10 +6,7 @@ export interface UsageState {
   tier: 'free' | 'premium';
   usedToday: number;
   dailyQuota: number;
-  imagesUsedToday: number;
-  dailyImageQuota: number;
   remaining: number;
-  imagesRemaining: number;
   resetsAt: string;
   planPeriod: 'monthly' | 'yearly' | null;
   currentPeriodEnd: number | null;
@@ -40,9 +37,7 @@ export function useUsage() {
     isLoading: query.isLoading,
     isPremium: usage?.tier === 'premium',
     remaining: usage?.remaining ?? 0,
-    imagesRemaining: usage?.imagesRemaining ?? 0,
     isAtLimit: (usage?.remaining ?? 0) <= 0,
     isNearLimit: (usage?.remaining ?? 0) <= Math.ceil((usage?.dailyQuota ?? 10) * 0.2),
-    isImageAtLimit: (usage?.imagesRemaining ?? 0) <= 0,
   };
 }

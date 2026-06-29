@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Sparkles, ImageIcon, BarChart3, X, ChevronRight } from 'lucide-react';
+import { Sparkles, BarChart3, X, ChevronRight } from 'lucide-react';
 import { useUsage } from '../hooks/useUsage';
 import { useBilling } from '../hooks/useBilling';
 import { usePaywallStore } from '../stores/paywallStore';
@@ -52,7 +52,6 @@ export default function UsageChip() {
   if (isLoading || !usage) return null;
 
   const aiPct = usage.dailyQuota > 0 ? (usage.usedToday / usage.dailyQuota) * 100 : 0;
-  const imgPct = usage.dailyImageQuota > 0 ? (usage.imagesUsedToday / usage.dailyImageQuota) * 100 : 0;
 
   return (
     <div className="relative" ref={panelRef}>
@@ -75,12 +74,6 @@ export default function UsageChip() {
         <span>{usage.remaining}/{usage.dailyQuota}</span>
         {usage.tier === 'premium' && (
           <span className="text-[9px] opacity-70">✦</span>
-        )}
-        {usage.dailyImageQuota > 0 && (
-          <span className="flex items-center gap-0.5 ml-0.5 opacity-70">
-            <ImageIcon size={9} />
-            <span>{usage.imagesRemaining}/{usage.dailyImageQuota}</span>
-          </span>
         )}
       </button>
 
@@ -113,25 +106,6 @@ export default function UsageChip() {
                 />
               </div>
             </div>
-
-            {usage.dailyImageQuota > 0 && (
-              <div>
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="text-text-secondary">Meal images</span>
-                  <span className="text-text-primary font-medium">
-                    {usage.imagesUsedToday}/{usage.dailyImageQuota}
-                  </span>
-                </div>
-                <div className="h-2 bg-cream rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all ${
-                      imgPct >= 80 ? 'bg-terracotta' : imgPct >= 50 ? 'bg-amber-400' : 'bg-sage'
-                    }`}
-                    style={{ width: `${Math.min(imgPct, 100)}%` }}
-                  />
-                </div>
-              </div>
-            )}
 
             <p className="text-text-secondary text-[11px]">
               Resets in {formatTimeRemaining(usage.resetsAt)}

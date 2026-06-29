@@ -94,14 +94,13 @@ export default function UpgradeSection() {
 
         <p className="text-text-secondary text-sm">
           {usage.tier === 'premium'
-            ? '70 AI requests and 3 AI-generated meal images per day'
-            : '70 AI requests and 3 AI-generated meal images per day, shared with your partner'
+            ? '70 AI requests per day'
+            : '70 AI requests per day, shared with your partner'
           }
         </p>
         <ul className="mt-3 space-y-1.5">
           {[
             '7× more AI requests',
-            'Generate meal photos from your recipes',
             'Priority AI responses',
             'Cancel anytime',
           ].map((item) => (

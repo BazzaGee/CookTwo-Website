@@ -2,7 +2,6 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { apiFetch, getWsBaseUrl } from '../lib/api';
 import { useAuthStore } from '../stores/authStore';
-import { cacheMealImage } from './useMealImage';
 import type { GeneratedMeal } from '../types/meal';
 import type { SyncEvent } from '../types/grocery';
 
@@ -127,9 +126,6 @@ export function useMealChat() {
           if (event.type === 'meal_generated') {
             if (event.generatedByPartnerId === partnerId) return;
             const meal = { ...event.meal, savedRecipeId: event.recipeId } as GeneratedMeal;
-            if (event.imageUrl && householdId) {
-              cacheMealImage(householdId, event.meal.name, event.imageUrl);
-            }
             queryClient.invalidateQueries({ queryKey: ['recipes', householdId] });
             const syntheticMsg: ChatMessage = {
               id: `sync-${event.at}-${Math.random().toString(36).slice(2, 8)}`,

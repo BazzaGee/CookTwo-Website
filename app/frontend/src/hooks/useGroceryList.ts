@@ -296,18 +296,6 @@ export function useGroceryList() {
     },
   });
 
-  const reclassifyAIMutation = useMutation({
-    mutationFn: () =>
-      apiFetch<{ reclassified: Array<{ id: string; type: string; category: Category; isFood: boolean; name: string }>; count: number }>(`/api/household/${householdId}/reclassify`, {
-        method: 'POST',
-        body: { scope: 'items' },
-        token,
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEY(householdId) });
-    },
-  });
-
   return {
     items: itemsQuery.data ?? [],
     isLoading: itemsQuery.isLoading,
@@ -322,7 +310,5 @@ export function useGroceryList() {
     isOnline,
     queuedCount: queueLen,
     reclassifyItem: reclassifyItemMutation.mutate,
-    reclassifyWithAI: reclassifyAIMutation.mutate,
-    isAIReclassifying: reclassifyAIMutation.isPending,
   };
 }

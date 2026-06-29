@@ -92,5 +92,5 @@ export default function PaywallModal() {
 }
 
 function isUpgradeable(code: PaywallCode): boolean {
-  return code === 'quota_exceeded' || code === 'premium_only' || code === 'image_quota_exceeded';
+  return code === 'quota_exceeded' || code === 'premium_only';
 }

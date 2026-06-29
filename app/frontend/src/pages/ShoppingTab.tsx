@@ -3,7 +3,7 @@ import { ShoppingList } from '../components/ShoppingList';
 import { AddItemForm } from '../components/AddItemForm';
 
 export default function ShoppingTab() {
-  const { items, addItem, toggleItem, deleteItem, moveCheckedToPantry, isMovingToPantry, isLoading, isOnline, queuedCount, reclassifyWithAI, isAIReclassifying } = useGroceryList();
+  const { items, addItem, toggleItem, deleteItem, moveCheckedToPantry, isMovingToPantry, isLoading, isOnline, queuedCount, reclassifyItem } = useGroceryList();
 
   function handleAdd(input: { name: string }) {
     const text = input.name.trim();
@@ -65,10 +65,9 @@ export default function ShoppingTab() {
             items={items}
             onToggle={toggleItem}
             onDelete={deleteItem}
+            onReclassify={(id, category, isFood) => reclassifyItem({ id, category, isFood })}
             onMoveToPantry={moveCheckedToPantry}
             isMovingToPantry={isMovingToPantry}
-            onAskAI={() => reclassifyWithAI()}
-            isAILoading={isAIReclassifying}
           />
         )}
       </div>

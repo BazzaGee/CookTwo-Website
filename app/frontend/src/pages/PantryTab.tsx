@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { ChevronDown, ChevronRight, Plus, X, Sparkles } from 'lucide-react';
+import { ChevronDown, ChevronRight, Plus, X } from 'lucide-react';
 import { usePantry } from '../hooks/usePantry';
 import { PartnerDot } from '../components/PartnerDot';
 import type { PantryItem, Category } from '../types/grocery';
+import { CATEGORIES, FOOD_CATEGORIES } from '../types/grocery';
 
 const CATEGORY_EMOJIS: Record<Category, string> = {
   Produce: '🥬',
@@ -16,7 +17,7 @@ const CATEGORY_EMOJIS: Record<Category, string> = {
 const CATEGORY_ORDER: Category[] = ['Produce', 'Meat', 'Dairy', 'Pantry', 'Household', 'Personal Care'];
 
 export default function PantryTab() {
-  const { items, addItem, deleteItem, isLoading, reclassifyWithAI, isAIReclassifying } = usePantry();
+  const { items, addItem, deleteItem, isLoading, reclassifyItem } = usePantry();
   const [input, setInput] = useState('');
   const [collapsedCategories, setCollapsedCategories] = useState<Set<Category>>(new Set());
 
@@ -126,20 +127,6 @@ export default function PantryTab() {
         </div>
       ) : (
         <>
-          {needsReviewCount >= 3 && (
-            <div className="mb-4 flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => reclassifyWithAI()}
-                disabled={isAIReclassifying}
-                className="flex items-center gap-1.5 text-xs font-medium text-terracotta-dark hover:text-terracotta bg-terracotta/10 hover:bg-terracotta/20 px-3 py-1.5 rounded-full transition-colors disabled:opacity-50"
-              >
-                <Sparkles size={12} />
-                {isAIReclassifying ? 'AI sorting…' : 'Ask AI to sort'}
-              </button>
-            </div>
-          )}
-
           <div className="flex items-center justify-between mb-3">
             <span className="text-text-secondary text-xs font-medium">
               {items.length} item{items.length !== 1 ? 's' : ''}
@@ -214,6 +201,7 @@ export default function PantryTab() {
                           item={item}
                           onDelete={deleteItem}
                           displayText={formatItemDisplay(item)}
+                          onReclassify={(cat) => reclassifyItem({ id: item.id, category: cat, isFood: FOOD_CATEGORIES.includes(cat) })}
                         />
                       ))}
                     </ul>
@@ -228,11 +216,13 @@ export default function PantryTab() {
   );
 }
 
-function PantryRow({ item, onDelete, displayText }: {
+function PantryRow({ item, onDelete, displayText, onReclassify }: {
   item: PantryItem;
   onDelete: (id: string) => void;
   displayText: string;
+  onReclassify?: (category: Category) => void;
 }) {
+  const [showPicker, setShowPicker] = useState(false);
   return (
     <li className="group border-b border-border/60 last:border-b-0">
       <div className="flex items-center gap-3 py-3 px-4">
@@ -245,6 +235,41 @@ function PantryRow({ item, onDelete, displayText }: {
             <span className="text-error text-xs ml-2">Not a food item</span>
           )}
         </div>
+
+        {onReclassify && (
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowPicker(!showPicker)}
+              aria-label="Move to category"
+              className="flex-shrink-0 p-1 rounded-md text-text-secondary/0 group-hover:text-text-secondary hover:!text-sage transition-colors"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                <line x1="12" y1="22.08" x2="12" y2="12" />
+              </svg>
+            </button>
+            {showPicker && (
+              <div className="absolute right-0 top-8 z-20 bg-white border border-border rounded-xl shadow-lg p-2 min-w-44">
+                <p className="text-text-secondary text-[10px] uppercase tracking-wide font-medium px-2 pb-1">Move to…</p>
+                {CATEGORIES.map((cat) => (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => { onReclassify(cat); setShowPicker(false); }}
+                    className={`w-full text-left text-sm py-1.5 px-2 rounded-lg hover:bg-cream transition-colors flex items-center gap-2 ${
+                      item.category === cat ? 'text-sage font-medium' : 'text-text-primary'
+                    }`}
+                  >
+                    <span>{({ Produce: '🥬', Meat: '🥩', Dairy: '🥛', Pantry: '🫙', Household: '🏠', 'Personal Care': '🧴' } as Record<Category, string>)[cat]}</span>
+                    <span>{cat}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {!item.needsReview && (
           <PartnerDot slot={item.addedByPartnerSlot} size={8} />

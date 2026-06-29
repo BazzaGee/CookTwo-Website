@@ -1062,7 +1062,7 @@ function PlanStep({
           <h3 className="text-text-primary font-semibold text-sm">Premium</h3>
         </div>
         <p className="text-text-secondary text-sm leading-relaxed">
-          Get <strong className="text-text-primary">70 AI requests</strong> and <strong className="text-text-primary">3 AI-generated meal images</strong> per day — that's 7× more. Cancel anytime.
+          Get <strong className="text-text-primary">70 AI requests</strong> per day — that's 7× more. Cancel anytime.
         </p>
 
         <div className="flex bg-cream-dark rounded-xl p-1 mt-4 mb-4">

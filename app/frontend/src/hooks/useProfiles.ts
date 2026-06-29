@@ -23,6 +23,7 @@ export interface PartnerProfile {
   fastingMode: string | null;
   allergies: string;
   allergens: string[];
+  bodyProfileVisible: boolean;
   createdAt: number;
   updatedAt: number;
   weightKg: number | null;

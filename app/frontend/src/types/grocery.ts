@@ -15,6 +15,8 @@ export interface GroceryItem {
   needsReview: boolean;
   addedByPartnerId: string;
   addedByPartnerSlot: PartnerSlot;
+  checkedByPartnerId?: string;
+  checkedByPartnerSlot?: number;
   createdAt: number;
   updatedAt: number;
 }
@@ -33,6 +35,7 @@ export interface PantryItem {
   addedByPartnerId: string;
   addedByPartnerSlot: PartnerSlot;
   createdAt: number;
+  updatedAt?: number;
 }
 
 export type SyncEvent =
@@ -45,7 +48,7 @@ export type SyncEvent =
   | { type: 'pantry_added'; item: PantryItem }
   | { type: 'pantry_updated'; item: PantryItem }
   | { type: 'pantry_deleted'; id: string }
-  | { type: 'meal_generated'; meal: GeneratedMeal; imageUrl?: string; recipeId?: string; generatedBySlot: PartnerSlot; generatedByName?: string; generatedByPartnerId?: string; aiMessage?: string; at: number }
+  | { type: 'meal_generated'; meal: GeneratedMeal; recipeId?: string; generatedBySlot: PartnerSlot; generatedByName?: string; generatedByPartnerId?: string; aiMessage?: string; at: number }
   | { type: 'recipe_added'; recipeId: string; recipeName: string; at: number }
   | { type: 'hello'; partnerId: string; slot: PartnerSlot; at: number };
 

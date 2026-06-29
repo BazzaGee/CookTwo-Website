@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
-import { ChevronDown, ChevronRight, ShoppingBag, Sparkles } from 'lucide-react';
+import { useState } from 'react';
+import { ChevronDown, ChevronRight, ShoppingBag } from 'lucide-react';
 import { ItemRow } from './ItemRow';
 import type { Category, GroceryItem } from '../types/grocery';
 
@@ -18,29 +18,13 @@ interface Props {
   items: GroceryItem[];
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
+  onReclassify?: (id: string, category: Category, isFood: boolean) => void;
   onMoveToPantry: () => void;
   isMovingToPantry: boolean;
-  onAskAI: () => void;
-  isAILoading: boolean;
 }
 
-export function ShoppingList({ items, onToggle, onDelete, onMoveToPantry, isMovingToPantry, onAskAI, isAILoading }: Props) {
+export function ShoppingList({ items, onToggle, onDelete, onReclassify, onMoveToPantry, isMovingToPantry }: Props) {
   const [collapsedCategories, setCollapsedCategories] = useState<Set<Category>>(new Set());
-  const [showSortPulse, setShowSortPulse] = useState(false);
-  const prevLoadingRef = useRef(false);
-  const pulseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    if (prevLoadingRef.current && !isAILoading) {
-      setShowSortPulse(true);
-      if (pulseTimerRef.current) clearTimeout(pulseTimerRef.current);
-      pulseTimerRef.current = setTimeout(() => setShowSortPulse(false), 1500);
-    }
-    prevLoadingRef.current = isAILoading;
-    return () => {
-      if (pulseTimerRef.current) clearTimeout(pulseTimerRef.current);
-    };
-  }, [isAILoading]);
 
   const checkedItems = items.filter((i) => i.isChecked);
   const checkedFoodCount = checkedItems.filter((i) => i.isFood).length;
@@ -118,15 +102,6 @@ export function ShoppingList({ items, onToggle, onDelete, onMoveToPantry, isMovi
               </button>
             </>
           )}
-          <button
-            type="button"
-            onClick={onAskAI}
-            disabled={isAILoading}
-            className={`flex items-center gap-1.5 text-xs font-medium text-terracotta-dark hover:text-terracotta bg-terracotta/10 hover:bg-terracotta/20 px-3 py-1.5 rounded-full transition-colors disabled:opacity-50 ${showSortPulse ? 'brand-pulse' : ''}`}
-          >
-            <Sparkles size={12} />
-            {isAILoading ? 'AI sorting…' : 'AI sort check'}
-          </button>
         </div>
       </div>
 
@@ -165,6 +140,7 @@ export function ShoppingList({ items, onToggle, onDelete, onMoveToPantry, isMovi
                       item={item}
                       onToggle={onToggle}
                       onDelete={onDelete}
+                      onReclassify={onReclassify}
                     />
                   ))}
                 </ul>

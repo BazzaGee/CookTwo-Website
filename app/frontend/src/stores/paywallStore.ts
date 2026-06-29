@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export type PaywallCode = 'quota_exceeded' | 'premium_only' | 'image_quota_exceeded' | 'stripe_not_configured';
+export type PaywallCode = 'quota_exceeded' | 'premium_only' | 'stripe_not_configured';
 
 interface PaywallState {
   visible: boolean;
@@ -18,11 +18,7 @@ const MESSAGES: Record<PaywallCode, { title: string; message: string }> = {
   },
   premium_only: {
     title: 'Premium feature',
-    message: 'Image generation is only available on the Premium plan. Upgrade for 3 AI-generated meal images per day.',
-  },
-  image_quota_exceeded: {
-    title: 'No image generations left',
-    message: 'You\'ve used all 3 image generations for today. Resets at midnight.',
+    message: 'This feature is only available on the Premium plan. Upgrade for 70 AI requests per day.',
   },
   stripe_not_configured: {
     title: 'Coming soon',
