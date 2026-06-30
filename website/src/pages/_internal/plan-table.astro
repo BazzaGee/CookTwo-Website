@@ -1,5 +1,6 @@
 ---
-// Temporary page to screenshot the plan comparison table
+// Internal page for screenshotting the plan comparison element.
+// This page is excluded from production builds via the _internal prefix.
 ---
 
 <html lang="en">
@@ -7,87 +8,152 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Plan Comparison</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Inter', system-ui, sans-serif; background: #FAF6EE; color: #2C3E2D; padding: 40px; width: 800px; }
-    .table-wrap { max-width: 700px; margin: 0 auto; }
-    h2 { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
-    .subtitle { font-size: 14px; color: #6B7B6C; margin-bottom: 24px; }
-    table { width: 100%; border-collapse: collapse; }
-    th { text-align: left; font-size: 13px; font-weight: 600; color: #6B7B6C; padding: 12px 16px; border-bottom: 2px solid #E5E1DA; }
-    th:not(:first-child) { text-align: center; }
-    td { padding: 14px 16px; border-bottom: 1px solid #E5E1DA; font-size: 14px; }
-    td:not(:first-child) { text-align: center; }
-    td:first-child { font-weight: 500; }
-    .plan-free { color: #6B7B6C; font-weight: 600; }
-    .plan-premium { color: #7A9E7E; font-weight: 600; }
-    .check { color: #7A9E7E; font-size: 18px; }
-    .dash { color: #E5E1DA; }
-    .price-row td { border-bottom: none; padding-top: 20px; }
-    .price { font-weight: 700; font-size: 15px; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: #FAF6EE;
+      color: #2C3E2D;
+      padding: 48px 24px;
+      min-height: 100vh;
+    }
+    .container { max-width: 720px; margin: 0 auto; }
+    .header { text-align: center; margin-bottom: 32px; }
+    h2 {
+      font-size: 28px; font-weight: 700; letter-spacing: -0.02em;
+      margin-bottom: 8px; color: #2C3E2D;
+    }
+    .subtitle {
+      font-size: 15px; color: #6B7B6C; line-height: 1.5;
+    }
+    .cards {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+    }
+    .card {
+      background: white; border-radius: 24px; padding: 28px 24px;
+      border: 2px solid transparent; position: relative;
+    }
+    .card-free { border-color: #E5E1DA; }
+    .card-premium {
+      border-color: #7A9E7E;
+      background: linear-gradient(180deg, #FFFFFF 0%, #F4F7F2 100%);
+    }
+    .card-badge {
+      position: absolute; top: -10px; right: 20px;
+      background: #E07A5F; color: white;
+      font-size: 11px; font-weight: 600;
+      padding: 4px 10px; border-radius: 999px;
+      letter-spacing: 0.04em; text-transform: uppercase;
+    }
+    .plan-name {
+      font-size: 20px; font-weight: 700; margin-bottom: 4px;
+    }
+    .plan-name-free { color: #6B7B6C; }
+    .plan-name-premium { color: #7A9E7E; }
+    .plan-tag {
+      font-size: 12px; color: #6B7B6C; font-weight: 500;
+      text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 20px;
+    }
+    .feature {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 10px 0; font-size: 14px; line-height: 1.4;
+      border-top: 1px solid #F0EDE5;
+    }
+    .feature:first-of-type { border-top: none; }
+    .check { color: #7A9E7E; font-weight: 700; flex-shrink: 0; }
+    .dash { color: #D5CFC2; flex-shrink: 0; }
+    .price-row {
+      margin-top: 20px; padding-top: 20px;
+      border-top: 1px solid #E5E1DA;
+    }
+    .price { font-size: 24px; font-weight: 700; }
     .price-free { color: #6B7B6C; }
     .price-premium { color: #7A9E7E; }
-    .price-sub { font-size: 12px; color: #6B7B6C; display: block; margin-top: 2px; }
+    .price-sub { font-size: 12px; color: #6B7B6C; margin-top: 4px; }
   </style>
 </head>
 <body>
-  <div class="table-wrap">
-    <h2>Free vs Premium</h2>
-    <p class="subtitle">Both plans are full-featured. The difference is how much AI you get per day.</p>
-    <table>
-      <thead>
-        <tr>
-          <th></th>
-          <th><span class="plan-free">Free</span></th>
-          <th><span class="plan-premium">Premium</span></th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>AI requests per day</td>
-          <td>10</td>
-          <td>70</td>
-        </tr>
-        <tr>
-          <td>Chat with the meal planner</td>
-          <td><span class="check">✓</span></td>
-          <td><span class="check">✓</span></td>
-        </tr>
-        <tr>
-          <td>Generate dinners</td>
-          <td><span class="check">✓</span></td>
-          <td><span class="check">✓</span></td>
-        </tr>
-        <tr>
-          <td>Save unlimited recipes</td>
-          <td><span class="check">✓</span></td>
-          <td><span class="check">✓</span></td>
-        </tr>
-        <tr>
-          <td>Real-time sync</td>
-          <td><span class="check">✓</span></td>
-          <td><span class="check">✓</span></td>
-        </tr>
-        <tr>
-          <td>Adaptive plating for two</td>
-          <td><span class="check">✓</span></td>
-          <td><span class="check">✓</span></td>
-        </tr>
-        <tr>
-          <td>Priority AI responses</td>
-          <td><span class="dash">—</span></td>
-          <td><span class="check">✓</span></td>
-        </tr>
-        <tr class="price-row">
-          <td></td>
-          <td><span class="price price-free">Free</span></td>
-          <td>
-            <span class="price price-premium">$4.99/mo</span>
-            <span class="price-sub">or $44.99/yr (save 25%)</span>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+  <div class="container">
+    <div class="header">
+      <h2>Two plans, one shared kitchen</h2>
+      <p class="subtitle">Both plans include everything. The only difference is how much AI you get per day.</p>
+    </div>
+
+    <div class="cards">
+      <div class="card card-free">
+        <div class="plan-name plan-name-free">Free</div>
+        <div class="plan-tag">Get started</div>
+        <div class="feature">
+          <span class="check">✓</span>
+          <span><strong>10</strong> AI requests per day</span>
+        </div>
+        <div class="feature">
+          <span class="check">✓</span>
+          <span>Chat with the meal planner</span>
+        </div>
+        <div class="feature">
+          <span class="check">✓</span>
+          <span>Generate meals from pantry</span>
+        </div>
+        <div class="feature">
+          <span class="check">✓</span>
+          <span>Save unlimited recipes</span>
+        </div>
+        <div class="feature">
+          <span class="check">✓</span>
+          <span>Real-time sync between partners</span>
+        </div>
+        <div class="feature">
+          <span class="check">✓</span>
+          <span>Adaptive plating for two</span>
+        </div>
+        <div class="price-row">
+          <div class="price price-free">$0</div>
+          <div class="price-sub">Forever, shared with your partner</div>
+        </div>
+      </div>
+
+      <div class="card card-premium">
+        <div class="card-badge">More AI</div>
+        <div class="plan-name plan-name-premium">Premium</div>
+        <div class="plan-tag">7× more headroom</div>
+        <div class="feature">
+          <span class="check">✓</span>
+          <span><strong>70</strong> AI requests per day</span>
+        </div>
+        <div class="feature">
+          <span class="check">✓</span>
+          <span>Chat with the meal planner</span>
+        </div>
+        <div class="feature">
+          <span class="check">✓</span>
+          <span>Generate meals from pantry</span>
+        </div>
+        <div class="feature">
+          <span class="check">✓</span>
+          <span>Save unlimited recipes</span>
+        </div>
+        <div class="feature">
+          <span class="check">✓</span>
+          <span>Real-time sync between partners</span>
+        </div>
+        <div class="feature">
+          <span class="check">✓</span>
+          <span>Adaptive plating for two</span>
+        </div>
+        <div class="feature">
+          <span class="check">✓</span>
+          <span>Priority AI responses</span>
+        </div>
+        <div class="price-row">
+          <div class="price price-premium">$4.99<span style="font-size:14px;font-weight:500;color:#6B7B6C">/mo</span></div>
+          <div class="price-sub">or $44.99/yr — save 25%</div>
+        </div>
+      </div>
+    </div>
   </div>
 </body>
 </html>

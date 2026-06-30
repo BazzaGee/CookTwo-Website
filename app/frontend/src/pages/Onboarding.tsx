@@ -232,8 +232,8 @@ export default function Onboarding() {
   }
 
   return (
-    <main className="min-h-full bg-cream flex flex-col">
-      <div className="flex-1 flex items-center justify-center px-6 py-12">
+    <main className="h-full bg-cream flex flex-col overflow-hidden">
+      <div className="flex-1 min-h-0 flex items-center justify-center px-6 py-12 overflow-y-auto">
         <div className="w-full max-w-md">
           {step === 'welcome' && (
             <WelcomeStep

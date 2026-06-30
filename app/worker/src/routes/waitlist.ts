@@ -20,9 +20,6 @@ export async function handleSubscribe(c: Context<{ Bindings: Env }>): Promise<Re
   const siteUrl = c.env.SITE_URL || 'https://cooktwo.app';
 
   if (existing) {
-    if (existing.verified) {
-      return c.json({ status: 'already_verified', message: "You're already verified! Check your inbox for the access link." });
-    }
     if (joinCode && !existing.join_code) {
       await c.env.DB.prepare('UPDATE waitlist SET verify_token = ?, join_code = ? WHERE id = ?')
         .bind(verifyToken, joinCode, existing.id)

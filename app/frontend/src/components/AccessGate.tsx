@@ -16,6 +16,10 @@ export default function AccessGate({ children }: { children: ReactNode }) {
       const devParam = params.get('dev');
 
       if (devParam === DEV_KEY) {
+        // If a skipOnboarding flag is also present, persist it so the auth Gate bypasses onboarding.
+        if (params.has('skipOnboarding')) {
+          try { localStorage.setItem('cfs.dev_skip_applied', '1'); } catch {}
+        }
         params.delete('dev');
         const newUrl = `${window.location.pathname}${params.toString() ? '?' + params.toString() : ''}${window.location.hash}`;
         window.history.replaceState(null, '', newUrl);
@@ -113,7 +117,7 @@ function LockedScreen() {
           This app is available by invitation only. Enter your email on our website to get access.
         </p>
         <a
-          href="https://couples-food-system-v3.pages.dev/"
+          href="https://cooktwo.com/"
           className="btn-primary inline-flex items-center justify-center gap-2"
         >
           Go to CookTwo

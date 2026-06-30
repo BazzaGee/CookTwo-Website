@@ -24,9 +24,11 @@ interface Props {
   aspect?: string;
   /** Width class — defaults to max-w-xs (320px) */
   size?: 'sm' | 'md' | 'lg';
+  /** Whether to wrap the screenshot in a phone bezel (status bar + home indicator). Default true. */
+  bezel?: boolean;
 }
 
-const { src, alt, markers = [], caption, aspect = '9 / 19.5', size = 'sm' } = Astro.props;
+const { src, alt, markers = [], caption, aspect = '9 / 19.5', size = 'sm', bezel = true } = Astro.props;
 
 const sizeClass = {
   sm: 'max-w-[280px]',
@@ -39,16 +41,35 @@ const markerId = `markers-${Math.random().toString(36).slice(2, 9)}`;
 
 <figure class="not-prose my-10 flex flex-col items-center">
   <div class={`relative ${sizeClass} w-full`} style={`aspect-ratio: ${aspect};`}>
-    <img
-      src={src}
-      alt={alt}
-      loading="lazy"
-      decoding="async"
-      class="absolute inset-0 w-full h-full object-cover rounded-[2rem] shadow-xl"
-    />
+    {bezel ? (
+      <div class="absolute inset-0 rounded-[2.75rem] bg-gradient-to-b from-zinc-800 to-zinc-900 shadow-2xl p-[10px]">
+        <div class="relative w-full h-full rounded-[2.25rem] overflow-hidden bg-cream">
+          <div class="absolute top-0 left-1/2 -translate-x-1/2 z-10 w-[35%] h-[22px] bg-zinc-900 rounded-b-2xl flex items-center justify-center gap-1.5">
+            <div class="w-1 h-1 rounded-full bg-zinc-700"></div>
+            <div class="w-1.5 h-1.5 rounded-full bg-zinc-700"></div>
+          </div>
+          <img
+            src={src}
+            alt={alt}
+            loading="lazy"
+            decoding="async"
+            class="absolute inset-0 w-full h-full object-cover object-top"
+          />
+          <div class="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-[35%] h-[4px] bg-zinc-700 rounded-full"></div>
+        </div>
+      </div>
+    ) : (
+      <img
+        src={src}
+        alt={alt}
+        loading="lazy"
+        decoding="async"
+        class="absolute inset-0 w-full h-full object-cover rounded-[2rem] shadow-xl"
+      />
+    )}
     {markers.length > 0 && (
       <svg
-        class="absolute inset-0 w-full h-full pointer-events-none"
+        class="absolute inset-0 w-full h-full pointer-events-none z-20"
         viewBox="0 0 100 100"
         preserveAspectRatio="none"
         aria-hidden="true"
@@ -99,7 +120,7 @@ const markerId = `markers-${Math.random().toString(36).slice(2, 9)}`;
     )}
     {markers.map((m) => (
       <span
-        class="absolute z-10 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center w-7 h-7 rounded-full bg-terracotta text-white text-xs font-bold shadow-lg ring-2 ring-white"
+        class="absolute z-30 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center w-7 h-7 rounded-full bg-terracotta text-white text-xs font-bold shadow-lg ring-2 ring-white"
         style={`left: ${100 - m.x}%; top: ${m.y}%;`}
         aria-label={`Marker ${m.label}`}
       >
